@@ -5,7 +5,7 @@ Taking an airplane flight is one of the most ordinary ways of traveling around t
  
 
 Team 8 will conduct an analysis based on a survey of airline passenger satisfaction. 
-The data is from https://www.kaggle.com/teejmahal20/airline-passenger-satisfaction. 
+The data is from https://www.kaggle.com/teejmahal20/airline-passenger-satisfaction.
 
  
 
@@ -15,7 +15,7 @@ The data source became available in 2018-2019. It includes a training dataset an
 
 ## SMART questions:
 
-- Which rating scores affect satisfaction the most? 
+- Which rating scores has the strongest correlation with satisfaction?
 
 - Does a passenger tend to be satisfied with his or her trip based on the passenger class? 
 
