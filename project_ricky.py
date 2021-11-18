@@ -161,3 +161,30 @@ for i in columns:
   normal_visual(airline, i)
 
 # %%
+# question 2 (modeling etc) 
+
+# Logit Regression?
+# evaluation confusion matrix
+
+# Classification Tree?
+# evaluate confusion matrix
+# classification report code from tree.py
+
+# Random Forest?
+# Roc Auc test?
+
+
+
+
+
+from sklearn.metrics import accuracy_score
+from sklearn.model_selection import train_test_split
+from sklearn.model_selection import cross_val_score, GridSearchCV
+from sklearn.linear_model import LogisticRegression
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.ensemble import RandomForestClassifier
+
+xairline = airline['Class']
+yairline = airline['Satisfaction']
+X_train, X_test, y_train, y_test= train_test_split(xairline, yairline, test_size=0.3, stratify=yairline, random_state=1)
+
