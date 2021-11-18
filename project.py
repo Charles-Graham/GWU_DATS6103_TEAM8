@@ -4,9 +4,27 @@
 #%% [markdown]
 
 #%%
-import numpy as np
-import pandas as pd
-import matplotlib.pyplot as plt
+
+### Preprocess
+#Combine original train and test datasets
+
+train = pd.read_csv('train.csv', index_col=0)
+test = pd.read_csv('test.csv', index_col=0)
+
+airline = pd.concat([train,test])
+
+
+#Check any existing null values
+for i in airline:
+  print(i + ' has ' + str(airline[i].isnull().sum()) + ' nulls')
+
+#Found 310 nulls in arrival delay in minutes column
+#Drop the NAs
+airline = airline[airline['Arrival Delay in Minutes'].isnull() == False]
+
+#df without NAs
+#Since the number of records is 103594 while NAs only 310, so not a big concern if dropping them
+#Add new column of Total Delay Minutes, and switch the column order with satisfaction
 
 def dfChkBasics(dframe, valCnt = False): 
   cnt = 1
@@ -47,37 +65,13 @@ def dfChkBasics(dframe, valCnt = False):
       print(dframe[colname].value_counts())
       cnt +=1
 
-#%%
 
-### Preprocess
+airline['Total Delay in Minutes'] = airline['Departure Delay in Minutes'] + airline['Arrival Delay in Minutes']
+temp = airline['satisfaction']
+airline = airline.drop(columns = ['satisfaction'])
+airline['Satisfaction'] = temp
 
-#%%
-train = pd.read_csv('train.csv', index_col=0)
-test = pd.read_csv('test.csv', index_col=0)
-
-airline = pd.concat([train,test])
-dfChkBasics(airline)
-#%%
-
-#Check any existing null values
-
-for i in airline:
-  print(i + ' has ' + str(airline[i].isnull().sum()) + ' nulls')
-#%%
-
-#Found 310 nulls in arrival delay in minutes column
-
-#Drop the NAs
-
-airline = airline[airline['Arrival Delay in Minutes'].isnull() == False]
 airline.to_csv('airline.csv')
-#%%
-#df without NAs
-
-#Since the number of records is 103594 while NAs only 310, so not a big concern if dropping them
-
-dfChkBasics(airline)
-
 
 
 
