@@ -161,6 +161,21 @@ for i in columns:
   normal_visual(airline, i)
 
 # %%
+
+# Encode the satisfication and class
+# eco 1, eco plus 2, bus 3
+# satisfied 1 neutral-unsatisfied 0
+
+airline['Class_Number'] = 0
+airline.loc[airline['Class'] == 'Eco', 'Class_Number'] = 1
+airline.loc[airline['Class'] == 'Eco Plus', 'Class_Number'] = 2
+airline.loc[airline['Class'] == 'Business', 'Class_Number'] = 3
+
+airline = pd.get_dummies(airline, columns=["Satisfaction"])
+
+# use Class_Number and Satisfaction_satisfied
+
+# %%
 # question 2 (modeling etc) 
 
 # Logit Regression?
@@ -173,10 +188,6 @@ for i in columns:
 # Random Forest?
 # Roc Auc test?
 
-
-
-
-
 from sklearn.metrics import accuracy_score
 from sklearn.model_selection import train_test_split
 from sklearn.model_selection import cross_val_score, GridSearchCV
@@ -188,3 +199,5 @@ xairline = airline['Class']
 yairline = airline['Satisfaction']
 X_train, X_test, y_train, y_test= train_test_split(xairline, yairline, test_size=0.3, stratify=yairline, random_state=1)
 
+
+# %%
