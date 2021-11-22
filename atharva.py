@@ -116,15 +116,11 @@ plt.show()
 airline.satisfaction = pd.Categorical(airline.satisfaction,["neutral or dissatisfied","satisfied"],ordered=True)
 airline.satisfaction = airline.satisfaction.cat.codes
 #%%
-from tabulate import tabulate
 df = airline[["satisfaction","Inflight wifi service","Departure/Arrival time convenient","Ease of Online booking","Gate location","Food and drink","Online boarding","Seat comfort","Inflight entertainment"	,"On-board service","Leg room service","Baggage handling",	"Checkin service","Inflight service","Cleanliness"]]
 print(st.shapiro(df)) 
 # Since the data is not normal we chose the sperman's test
 cort = pd.DataFrame(df.corr(method="spearman"))
 print(cort.head())
-sns.heatmap(df.corr())
+sns.heatmap(df.corr(method="spearman"))
 # From the heat map it is evident that the Online boarding rating has comparatively the strongest correlation with satisfaction compared to the rest of the variables. 
-# %%
-
-
 # %%
