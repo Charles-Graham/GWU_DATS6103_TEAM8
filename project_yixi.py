@@ -75,8 +75,11 @@ airline = airline.drop(columns = ['satisfaction'])
 airline['Satisfaction'] = temp
 # %% YIXI part
 # change columns name for model
-airlineQ3 = airline.rename({'Departure Delay in Minutes': 'ddim', 'Arrival Delay in Minutes': 'adim', 'Total Delay in Minutes':'tdim'}, axis=1)
+airlineQ3 = airline.rename({'Departure Delay in Minutes': 'ddim', 'Arrival Delay in Minutes': 'adim', 
+                            'Total Delay in Minutes':'tdim', 'Type of Travel':'tot',
+                            'Departure/Arrival time convenient' : 'datc'}, axis=1)
 airlineQ3["Satisfaction"] = np.where(airlineQ3['Satisfaction'] == 'neutral or dissatisfied', 0, 1)
+airlineQ3["tot"] = np.where(airlineQ3['tot'] == 'Business travel', 0, 1)
 # reindex
 #airlineQ3.reset_index(drop=True, inplace=True)
 #%%
@@ -91,7 +94,7 @@ from statsmodels.formula.api import glm
 #####################################################################
 # Logistic Regression model of Satisfaction ~ ddim + adim
 #####################################################################
-modelDelayLogitFit = glm(formula='Satisfaction ~ ddim + adim', data=airlineQ3, family=sm.families.Binomial()).fit()
+modelDelayLogitFit = glm(formula='Satisfaction ~ ddim + adim + tot + datc', data=airlineQ3, family=sm.families.Binomial()).fit()
 print( modelDelayLogitFit.summary())
 # Since the p-value is extremely small, Departure Delay in Minutes and Arrival Delay in Minutes have strong relationship with Satisfaction
 modelPredicitonOfDelay = pd.DataFrame( columns=['logit_ddimAdim'], data= modelDelayLogitFit.predict(airlineQ3)) 
@@ -137,8 +140,24 @@ rownames=['Actual'], colnames=['Predicted'], margins = True))
 # Recall rate = TP / (TP + FN) = 52892 / (52892 + 3370) = 0.9401016671998862
 
 #%%
-xSatisfaction = airlineQ3[['adim', 'ddim']]
+xSatisfaction = airlineQ3[['adim', 'ddim', 'tot', 'datc']]
 ySatisfaction = airlineQ3['Satisfaction']
+#%%
+sns.set()
+sns.pairplot(xSatisfaction)
+plt.show()
+#%%
+from pandas.plotting import scatter_matrix
+# scatter_matrix(xpizza, alpha = 0.2, figsize = (7, 7), diagonal = 'hist')
+scatter_matrix(xSatisfaction, alpha = 0.2, figsize = (7, 7), diagonal = 'kde')
+# plt.title("pandas scatter matrix plot")
+plt.show()
+#%%
+import seaborn as sns
+# Plot the histogram thanks to the distplot function
+sns.scatterplot(data=airlineQ3, x="adim", y="ddim", hue="Type of Travel")
+
+#%%
 from sklearn.model_selection import train_test_split
 x_trainSatisfaction, x_testSatisfaction, y_trainSatisfaction, y_testSatisfaction = train_test_split(xSatisfaction, ySatisfaction, random_state=1 )
 from sklearn.linear_model import LogisticRegression
@@ -234,6 +253,26 @@ knn_scv = KNeighborsClassifier(n_neighbors=mrroger) # instantiate with n value g
 scv_results = cross_val_score(knn_scv, xsSatisfaction, ysSatisfaction, cv=5)
 print(scv_results) 
 print(np.mean(scv_results)) 
+#%%
+#####################################################################
+# K-means 
+#####################################################################
+from sklearn.cluster import KMeans
+km_xSatisfaction = KMeans( n_clusters=2, init='random', n_init=10, max_iter=300, tol=1e-04, random_state=0 )
+y_km = km_xSatisfaction.fit_predict(xSatisfaction)
+# plot
+# plot the 3 clusters
+index1 = 0
+index2 = 1
 
-
+plt.scatter( xSatisfaction[y_km==0].iloc[:,index1], xSatisfaction[y_km==0].iloc[:,index2], s=50, c='lightgreen', marker='s', edgecolor='black', label='cluster 1' )
+plt.scatter( xSatisfaction[y_km==1].iloc[:,index1], xSatisfaction[y_km==1].iloc[:,index2], s=50, c='orange', marker='o', edgecolor='black', label='cluster 2' )
+#plt.scatter( xSatisfaction[y_km==2].iloc[:,index1], xSatisfaction[y_km==2].iloc[:,index2], s=50, c='lightblue', marker='v', edgecolor='black', label='cluster 3' )
+# plot the centroids
+plt.scatter( km_xSatisfaction.cluster_centers_[:, index1], km_xSatisfaction.cluster_centers_[:, index2], s=250, marker='*', c='red', edgecolor='black', label='centroids' )
+plt.legend(scatterpoints=1)
+plt.xlabel(str(index1) + " : " + xSatisfaction.columns[index1])
+plt.ylabel(str(index2) + " : " + xSatisfaction.columns[index2])
+plt.grid()
+plt.show()
 # %%
