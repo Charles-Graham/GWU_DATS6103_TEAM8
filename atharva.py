@@ -84,6 +84,7 @@ dfChkBasics(airline)
 #%%
 #Flight distance and types travel for cutomer types. 
 sns.boxplot(x="Type of Travel", y="Flight Distance",hue="Customer Type",data=airline)
+plt.title("Cutomer's purpose of travel vs distance of the flight and their loyalty")
 
 #%%
 #Flight distance and types travel for cutomer types. 
@@ -91,16 +92,17 @@ sns.boxplot(x="Type of Travel", y="Flight Distance",hue="Customer Type",data=air
 # plt.scatter(y= "Arrival Delay in Minutes",x ="Flight Distance" ,data=airline)
 # plt.hist([airline["Flight Distance"],airline["Arrival Delay in Minutes"]], alpha=0.5, label=['World 1','World 2'],edgecolor='black', linewidth=1)
 sns.scatterplot(airline["Departure Delay in Minutes"],airline["Arrival Delay in Minutes"])
+plt.title("Correlation between delay during the departure and the delay during arrival")
 #%%
 plt.scatter(x="Departure Delay in Minutes",y="Flight Distance",data=airline)
 plt.xlabel("Depature Delay in Minutes")
 plt.ylabel("Flight Distance")
-plt.scatter(x="Arrival Delay in Minutes",y="Flight Distance",data=airline,edgecolors= "red",alpha=0.2)
+plt.scatter(x="Arrival Delay in Minutes",y="Flight Distance",data=airline,edgecolors= "red",alpha=0.25)
 plt.xlabel("Depature Delay in Minutes")
 plt.ylabel("Flight Distance")
 plt.legend(["Departure Delay","Arrival Delay"])
 plt.show
-
+plt.title("Does flight distance have an effect on the delay during departure and arrival?")
 
 #%%
 airline["avg_rating_score"] = airline[["Inflight wifi service","Departure/Arrival time convenient","Ease of Online booking","Gate location","Food and drink","Online boarding","Seat comfort","Inflight entertainment"	,"On-board service","Leg room service","Baggage handling",	"Checkin service","Inflight service","Cleanliness"]].mean(axis=1)
@@ -114,8 +116,15 @@ plt.show()
 airline.satisfaction = pd.Categorical(airline.satisfaction,["neutral or dissatisfied","satisfied"],ordered=True)
 airline.satisfaction = airline.satisfaction.cat.codes
 #%%
+from tabulate import tabulate
 df = airline[["satisfaction","Inflight wifi service","Departure/Arrival time convenient","Ease of Online booking","Gate location","Food and drink","Online boarding","Seat comfort","Inflight entertainment"	,"On-board service","Leg room service","Baggage handling",	"Checkin service","Inflight service","Cleanliness"]]
-df.corr()
+print(st.shapiro(df)) 
+# Since the data is not normal we chose the sperman's test
+cort = pd.DataFrame(df.corr(method="spearman"))
+print(cort.head())
 sns.heatmap(df.corr())
 # From the heat map it is evident that the Online boarding rating has comparatively the strongest correlation with satisfaction compared to the rest of the variables. 
+# %%
+
+
 # %%
