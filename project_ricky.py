@@ -8,10 +8,12 @@
 ### Preprocess
 #Combine original train and test datasets
 
+import pandas as pd
+
 train = pd.read_csv('train.csv', index_col=0)
 test = pd.read_csv('test.csv', index_col=0)
 
-airline = pd.concat([train,test])
+airline = pd.concat([train,test], ignore_index = True)
 
 
 #Check any existing null values
@@ -71,7 +73,9 @@ temp = airline['satisfaction']
 airline = airline.drop(columns = ['satisfaction'])
 airline['Satisfaction'] = temp
 
-#airline.to_csv('airline.csv')
+#%%
+airline.to_csv('airline.csv')
+
 #%%
 #Summary
 
@@ -178,16 +182,12 @@ airline = pd.get_dummies(airline, columns=["Satisfaction"])
 # %%
 # question 2 (modeling etc) 
 
-# Logit Regression?
-# evaluation confusion matrix
+# Does a passenger tend to be satisfied with his or her trip 
+# based on the passenger class?
 
-# Classification Tree?
-# evaluate confusion matrix
-# classification report code from tree.py
-
-# Random Forest?
-# Roc Auc test?
-
+import statsmodels.api as sm
+from statsmodels.formula.api import glm
+from sklearn import metrics
 from sklearn.metrics import accuracy_score
 from sklearn.model_selection import train_test_split
 from sklearn.model_selection import cross_val_score, GridSearchCV
@@ -195,9 +195,60 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier
 
-xairline = airline['Class']
-yairline = airline['Satisfaction']
-X_train, X_test, y_train, y_test= train_test_split(xairline, yairline, test_size=0.3, stratify=yairline, random_state=1)
+#%%
+# Logit Regression?
+# evaluation confusion matrix
+
+#not train test split logistic
+
+Satisfaction_Class_Model = glm(formula = 'Satisfaction_satisfied ~ C(Class_Number)', data = airline, family=sm.families.Binomial())
+
+Satisfaction_Class_Model_Fit = Satisfaction_Class_Model.fit()
+print(Satisfaction_Class_Model_Fit.summary())
+
+airline_predictions = pd.DataFrame( columns=['sm_logit_pred'], data= Satisfaction_Class_Model_Fit.predict(airline)) 
+airline_predictions
+
+#%%
+cut_off = 0.5
+# Compute class predictions
+airline_predictions['satisfaction_div'] = np.where(airline_predictions['sm_logit_pred'] > cut_off, 1, 0)
+print(airline_predictions.satisfaction_div.head())
+
+# Make a cross table
+print(pd.crosstab(airline.Satisfaction_satisfied, airline_predictions.satisfaction_div,
+rownames=['Actual'], colnames=['Predicted'],
+margins = True))
+
+#0.75 accuracy
 
 
-# %%
+
+#%%
+y = airline['Satisfaction_satisfied']
+X = airline['Class_Number']
+train_logit_model=sm.Logit(y,X)
+result=train_logit_model.fit()
+print(result.summary2())
+#%%
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=0)
+logreg = LogisticRegression()
+
+x = np.array(X_train.values.tolist()).reshape(-1,1)
+y = np.array(y_train.values.tolist()).reshape(-1,1)
+
+x_t = np.array(X_test.values.tolist()).reshape(-1,1)
+y_t = np.array(y_test.values.tolist()).reshape(-1,1)
+
+logreg.fit(x, y)
+
+y_pred = logreg.predict(x_t)
+print('Accuracy of logistic regression classifier on test set: {:.2f}'.format(logreg.score(x_t, y_t)))
+
+#%%
+# Classification Tree?
+# evaluate confusion matrix
+# classification report code from tree.py
+
+# Random Forest?
+# Roc Auc test?
