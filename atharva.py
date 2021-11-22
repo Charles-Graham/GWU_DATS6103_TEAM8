@@ -9,6 +9,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
+import scipy.stats as st
 
 def dfChkBasics(dframe, valCnt = False): 
   cnt = 1
@@ -79,14 +80,6 @@ airline.to_csv('airline.csv')
 #Since the number of records is 103594 while NAs only 310, so not a big concern if dropping them
 
 dfChkBasics(airline)
-
-
-
-
-
-
-
-
 #EDA
 #%%
 #Flight distance and types travel for cutomer types. 
@@ -97,14 +90,18 @@ sns.boxplot(x="Type of Travel", y="Flight Distance",hue="Customer Type",data=air
 # sns.boxplot(x="Type of Travel", y="Flight Distance",hue="Customer Type",data=airline)
 # plt.scatter(y= "Arrival Delay in Minutes",x ="Flight Distance" ,data=airline)
 # plt.hist([airline["Flight Distance"],airline["Arrival Delay in Minutes"]], alpha=0.5, label=['World 1','World 2'],edgecolor='black', linewidth=1)
-
+sns.scatterplot(airline["Departure Delay in Minutes"],airline["Arrival Delay in Minutes"])
+#%%
 plt.scatter(x="Departure Delay in Minutes",y="Flight Distance",data=airline)
 plt.xlabel("Depature Delay in Minutes")
 plt.ylabel("Flight Distance")
-plt.scatter(x="Arrival Delay in Minutes",y="Flight Distance",data=airline,edgecolors= "red",alpha=0.1)
+plt.scatter(x="Arrival Delay in Minutes",y="Flight Distance",data=airline,edgecolors= "red",alpha=0.2)
 plt.xlabel("Depature Delay in Minutes")
 plt.ylabel("Flight Distance")
+plt.legend(["Departure Delay","Arrival Delay"])
 plt.show
+
+
 #%%
 airline["avg_rating_score"] = airline[["Inflight wifi service","Departure/Arrival time convenient","Ease of Online booking","Gate location","Food and drink","Online boarding","Seat comfort","Inflight entertainment"	,"On-board service","Leg room service","Baggage handling",	"Checkin service","Inflight service","Cleanliness"]].mean(axis=1)
 sns.violinplot(x='Class',y='avg_rating_score',hue='Gender',split= True,data= airline,saturation=1,palette= "Set1",order=["Eco","Eco Plus","Business"])
@@ -112,4 +109,13 @@ plt.title("Average rating by gender and class")
 plt.show()
 
 #Model
+#%%
+# Which rating scores has the strongest correlation with satisfaction?
+airline.satisfaction = pd.Categorical(airline.satisfaction,["neutral or dissatisfied","satisfied"],ordered=True)
+airline.satisfaction = airline.satisfaction.cat.codes
+#%%
+df = airline[["satisfaction","Inflight wifi service","Departure/Arrival time convenient","Ease of Online booking","Gate location","Food and drink","Online boarding","Seat comfort","Inflight entertainment"	,"On-board service","Leg room service","Baggage handling",	"Checkin service","Inflight service","Cleanliness"]]
+df.corr()
+sns.heatmap(df.corr())
+# From the heat map it is evident that the Online boarding rating has comparatively the strongest correlation with satisfaction compared to the rest of the variables. 
 # %%
