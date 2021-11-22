@@ -80,10 +80,17 @@ airlineQ3["Satisfaction"] = np.where(airlineQ3['Satisfaction'] == 'neutral or di
 # reindex
 #airlineQ3.reset_index(drop=True, inplace=True)
 #%%
+#####################################################################
+#
 # Is there a relationship between total delay time and departure/arrival convenience satisfaction?
+#
+#####################################################################
 import statsmodels.api as sm 
 from statsmodels.formula.api import glm
-#%% model of Satisfaction ~ ddim + adim
+#%% 
+#####################################################################
+# Logistic Regression model of Satisfaction ~ ddim + adim
+#####################################################################
 modelDelayLogitFit = glm(formula='Satisfaction ~ ddim + adim', data=airlineQ3, family=sm.families.Binomial()).fit()
 print( modelDelayLogitFit.summary())
 # Since the p-value is extremely small, Departure Delay in Minutes and Arrival Delay in Minutes have strong relationship with Satisfaction
@@ -99,9 +106,16 @@ modelPredicitonOfDelay['logit_ddimAdim_result'] = np.where(modelPredicitonOfDela
 # Make a cross table
 print(pd.crosstab(airlineQ3.Satisfaction, modelPredicitonOfDelay.logit_ddimAdim_result,
 rownames=['Actual'], colnames=['Predicted'], margins = True))
-
-
-#%% model of Satisfaction ~ tdim
+#%% [markdown]
+# cut-off_0.4\
+# Accuracy    = (TP + TN) / Total = (52231 + 7364) / 129487 = 0.4602392518167847\
+# Precision   = TP / (TP + FP) = 52231 / (52231 + 65861) = 0.4422907563594486\
+# Recall rate = TP / (TP + FN) = 52231 / (52231 + 4031) = 0.9283530624577868
+#%%
+#%% 
+#####################################################################
+# Logistic Regression model of Satisfaction ~ tdim
+#####################################################################
 modelDelayTdimLogitFit = glm(formula='Satisfaction ~ tdim', data=airlineQ3, family=sm.families.Binomial()).fit()
 print( modelDelayTdimLogitFit.summary())
 # Since the p-value is extremely small, Departure Delay in Minutes and Arrival Delay in Minutes have strong relationship with Satisfaction
@@ -116,4 +130,54 @@ modelPredicitonOfDelay['logit_tdim_result'] = np.where(modelPredicitonOfDelay['l
 # Make a cross table
 print(pd.crosstab(airlineQ3['Satisfaction'], modelPredicitonOfDelay['logit_tdim_result'],
 rownames=['Actual'], colnames=['Predicted'], margins = True))
+#%% [markdown]
+# cut-off_0.4\
+# Accuracy    = (TP + TN) / Total = (52892 + 6047) / 129487 = 0.45517310618054324\
+# Precision   = TP / (TP + FP) = 52892 / (52892 + 67178) = 0.4405097026734405\
+# Recall rate = TP / (TP + FN) = 52892 / (52892 + 3370) = 0.9401016671998862
+
+#%%
+xSatisfaction = airlineQ3[['adim', 'ddim']]
+ySatisfaction = airlineQ3['Satisfaction']
+from sklearn.model_selection import train_test_split
+x_trainSatisfaction, x_testSatisfaction, y_trainSatisfaction, y_testSatisfaction = train_test_split(xSatisfaction, ySatisfaction, random_state=1 )
+from sklearn.linear_model import LogisticRegression
+satisfactionLogit = LogisticRegression()  # instantiate
+satisfactionLogit.fit(x_trainSatisfaction, y_trainSatisfaction)
+print('Logit model accuracy (with the test set):', satisfactionLogit.score(x_testSatisfaction, y_testSatisfaction))
+print('Logit model accuracy (with the train set):', satisfactionLogit.score(x_trainSatisfaction, y_trainSatisfaction))
+#%%
+# Receiver Operator Characteristics (ROC)
+# Area Under the Curve (AUC)
+from sklearn.metrics import roc_auc_score, roc_curve
+
+# generate a no skill prediction (majority class)
+ns_probs = [0 for _ in range(len(y_testSatisfaction))]
+# predict probabilities
+lr_probs = satisfactionLogit.predict_proba(x_testSatisfaction)
+# keep probabilities for the positive outcome only
+lr_probs = lr_probs[:, 1]
+# calculate scores
+ns_auc = roc_auc_score(y_testSatisfaction, ns_probs)
+lr_auc = roc_auc_score(y_testSatisfaction, lr_probs)
+# summarize scores
+print('No Skill: ROC AUC=%.3f' % (ns_auc))
+print('Logistic: ROC AUC=%.3f' % (lr_auc))
+# calculate roc curves
+ns_fpr, ns_tpr, _ = roc_curve(y_testSatisfaction, ns_probs)
+lr_fpr, lr_tpr, _ = roc_curve(y_testSatisfaction, lr_probs)
+# plot the roc curve for the model
+plt.plot(ns_fpr, ns_tpr, linestyle='--', label='No Skill')
+plt.plot(lr_fpr, lr_tpr, marker='.', label='Logistic')
+# axis labels
+plt.xlabel('False Positive Rate')
+plt.ylabel('True Positive Rate')
+# show the legend
+plt.legend()
+# show the plot
+plt.show()
+
 # %%
+
+
+
