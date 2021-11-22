@@ -147,8 +147,10 @@ satisfactionLogit.fit(x_trainSatisfaction, y_trainSatisfaction)
 print('Logit model accuracy (with the test set):', satisfactionLogit.score(x_testSatisfaction, y_testSatisfaction))
 print('Logit model accuracy (with the train set):', satisfactionLogit.score(x_trainSatisfaction, y_trainSatisfaction))
 #%%
+#####################################################################
 # Receiver Operator Characteristics (ROC)
 # Area Under the Curve (AUC)
+#####################################################################
 from sklearn.metrics import roc_auc_score, roc_curve
 
 # generate a no skill prediction (majority class)
@@ -178,6 +180,60 @@ plt.legend()
 plt.show()
 
 # %%
+#####################################################################
+# K-Nearest-Neighbor KNN 
+#####################################################################
+# number of neighbors
+mrroger = 7
+# KNN algorithm
+from sklearn.neighbors import KNeighborsClassifier
+knn = KNeighborsClassifier(n_neighbors=mrroger) # instantiate with n value given
+knn.fit(xSatisfaction,ySatisfaction)
+y_pred = knn.predict(xSatisfaction)
+y_pred = knn.predict_proba(xSatisfaction)
+print(y_pred)
+print(knn.score(xSatisfaction,ySatisfaction))
+##################################################
+#%%
+# 2-KNN algorithm
+# The better way
+# from sklearn.neighbors import KNeighborsClassifier
+mrroger = 4
+knn_split = KNeighborsClassifier(n_neighbors=mrroger) # instantiate with n value given
+knn_split.fit(x_trainSatisfaction,y_trainSatisfaction)
+ytest_pred = knn_split.predict(x_testSatisfaction)
+ytest_pred
+print(knn_split.score(x_testSatisfaction,y_testSatisfaction))
+##################################################
+#%%
+# 3-KNN algorithm
+# The best way
+mrroger = 3
+from sklearn.neighbors import KNeighborsClassifier
+knn_cv = KNeighborsClassifier(n_neighbors=mrroger) # instantiate with n value given
+
+from sklearn.model_selection import cross_val_score
+cv_results = cross_val_score(knn_cv, xSatisfaction, ySatisfaction, cv=10)
+print(cv_results) 
+print(np.mean(cv_results)) 
+##################################################
+#%%
+# 4-KNN algorithm
+# Scale first? better or not?
+# Re-do our darta with scale on X
+from sklearn.preprocessing import scale
+xsSatisfaction = pd.DataFrame( scale(xSatisfaction), columns=xSatisfaction.columns )  # reminder: xadmit = dfadmit[['gre', 'gpa', 'rank']]
+# Note that scale( ) coerce the object from pd.dataframe to np.array  
+# Need to reconstruct the pandas df with column names
+# xsadmit.rank = xadmit.rank
+ysSatisfaction = ySatisfaction.copy()  # no need to scale y, but make a true copy / deep copy to be safe
+#%%
+# from sklearn.neighbors import KNeighborsClassifier
+knn_scv = KNeighborsClassifier(n_neighbors=mrroger) # instantiate with n value given
+# from sklearn.model_selection import cross_val_score
+scv_results = cross_val_score(knn_scv, xsSatisfaction, ysSatisfaction, cv=5)
+print(scv_results) 
+print(np.mean(scv_results)) 
 
 
-
+# %%
