@@ -83,9 +83,8 @@ dfChkBasics(airline)
 #EDA
 #%%
 #Flight distance and types travel for cutomer types. 
-sns.boxplot(x="Class", y="Flight Distance",hue="Type of Travel",order=["Eco","Eco Plus","Business"],data=airline)
-plt.title("Cutomer's purpose of travel vs Class they prefer")
-
+sns.boxplot(x="Type of Travel", y="Flight Distance",hue="Customer Type",data=airline)
+plt.title("Cutomer's purpose of travel vs distance of the flight and their loyalty")
 #%%
 #Flight distance and types travel for cutomer types. 
 # sns.boxplot(x="Type of Travel", y="Flight Distance",hue="Customer Type",data=airline)
@@ -95,10 +94,10 @@ sns.scatterplot(airline["Departure Delay in Minutes"],airline["Arrival Delay in 
 plt.title("Correlation between delay during the departure and the delay during arrival")
 #%%
 plt.scatter(x="Departure Delay in Minutes",y="Flight Distance",data=airline)
-plt.xlabel("Depature Delay in Minutes")
+plt.xlabel("Delay in Minutes")
 plt.ylabel("Flight Distance")
 plt.scatter(x="Arrival Delay in Minutes",y="Flight Distance",data=airline,edgecolors= "red",alpha=0.25)
-plt.xlabel("Depature Delay in Minutes")
+plt.xlabel("Delay in Minutes")
 plt.ylabel("Flight Distance")
 plt.legend(["Departure Delay","Arrival Delay"])
 plt.show
@@ -121,6 +120,8 @@ print(st.shapiro(df))
 # Since the data is not normal we chose the sperman's test
 cort = pd.DataFrame(df.corr(method="spearman"))
 print(cort)
-sns.heatmap(df.corr(method="spearman"))
+#%%
+fig, ax = plt.subplots(figsize=(15,15)) 
+sns.heatmap(df.corr(method="spearman"),annot=True,fmt = ".2g",ax=ax)
 # From the heat map it is evident that the Online boarding rating has comparatively the strongest correlation with satisfaction compared to the rest of the variables. 
 # %%
