@@ -83,8 +83,8 @@ dfChkBasics(airline)
 #EDA
 #%%
 #Flight distance and types travel for cutomer types. 
-sns.boxplot(x="Type of Travel", y="Flight Distance",hue="Customer Type",data=airline)
-plt.title("Cutomer's purpose of travel vs distance of the flight and their loyalty")
+sns.boxplot(x="Class", y="Flight Distance",hue="Type of Travel",order=["Eco","Eco Plus","Business"],data=airline)
+plt.title("Cutomer's purpose of travel vs Class they prefer")
 
 #%%
 #Flight distance and types travel for cutomer types. 
@@ -120,7 +120,7 @@ df = airline[["satisfaction","Inflight wifi service","Departure/Arrival time con
 print(st.shapiro(df)) 
 # Since the data is not normal we chose the sperman's test
 cort = pd.DataFrame(df.corr(method="spearman"))
-print(cort.head())
+print(cort)
 sns.heatmap(df.corr(method="spearman"))
 # From the heat map it is evident that the Online boarding rating has comparatively the strongest correlation with satisfaction compared to the rest of the variables. 
 # %%
