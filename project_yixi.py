@@ -77,24 +77,68 @@ airline['Satisfaction'] = temp
 # change columns name for model
 airlineQ3 = airline.rename({'Departure Delay in Minutes': 'ddim', 'Arrival Delay in Minutes': 'adim', 
                             'Total Delay in Minutes':'tdim', 'Type of Travel':'tot',
-                            'Departure/Arrival time convenient' : 'datc'}, axis=1)
+                            'Departure/Arrival time convenient' : 'datc', 'Customer Type' : 'ct'}, axis=1)
 airlineQ3["Satisfaction"] = np.where(airlineQ3['Satisfaction'] == 'neutral or dissatisfied', 0, 1)
 airlineQ3["tot"] = np.where(airlineQ3['tot'] == 'Business travel', 0, 1)
+airline['Gender'] = np.where(airlineQ3['Gender'] == 'Male', 0, 1)
+airlineQ3['ct'] = np.where(airlineQ3['ct'] == 'Loyal Customer', 0, 1)
+airlineQ3['Class'] = airlineQ3['Class'].map(lambda x : 0 if x == 'Business' else 1 if x == 'Eco' else 2)
+#%%
+# heatmap
+#sns.heatmap(airlineQ3.loc[:, ~airlineQ3.columns.isin(['id','Age'])], annot=True)
+#corr_matrix=airlineQ3.loc[:,['Gender','tot','ct']]
+#sns.heatmap(airlineQ3.loc[:,['Gender','tot','ct']], annot=True)
 # reindex
 #airlineQ3.reset_index(drop=True, inplace=True)
 #%%
 #####################################################################
 #
-# Is there a relationship between total delay time and departure/arrival convenience satisfaction?
+# How does the time affect the airline satisfaction?
 #
 #####################################################################
 import statsmodels.api as sm 
 from statsmodels.formula.api import glm
 #%% 
 #####################################################################
+# Anova of ddim + adim + datc
+#####################################################################
+#ax = sns.qqplo(x='ddim', data=airlineQ3)
+#ax = sns.boxplot(x="adim", data=airlineQ3, color='#7d0013')
+from scipy.stats import f_oneway
+anovaData = airlineQ3[['adim','datc']]
+CategoryGroupLists=anovaData.groupby('datc')['adim'].apply(list)
+AnovaResults = f_oneway(*CategoryGroupLists)
+print('P-Value for Anova is: ', AnovaResults[1])
+print(AnovaResults)
+#%%
+sns.scatterplot(x="Departure Delay in Minutes", y="Arrival Delay in Minutes", hue='Satisfaction', data=airline)
+plt.title("Scatterplot of Departure Delay in Minutes and Arrival Delay in Minutes")
+plt.xlabel("Departure Delay in Minutes")
+plt.ylabel("Arrival Delay in Minutes")
+
+
+#%%
+sns.countplot(data=airline, x="Departure/Arrival time convenient", hue="Satisfaction")
+plt.title("Countplot of Departure/Arrival time convenient")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#%%
+#####################################################################
 # Logistic Regression model of Satisfaction ~ ddim + adim
 #####################################################################
-modelDelayLogitFit = glm(formula='Satisfaction ~ ddim + adim + tot + datc', data=airlineQ3, family=sm.families.Binomial()).fit()
+modelDelayLogitFit = glm(formula='Satisfaction ~ ddim + adim + C(tot) + C(datc) + C(Class)', data=airlineQ3, family=sm.families.Binomial()).fit()
 print( modelDelayLogitFit.summary())
 # Since the p-value is extremely small, Departure Delay in Minutes and Arrival Delay in Minutes have strong relationship with Satisfaction
 modelPredicitonOfDelay = pd.DataFrame( columns=['logit_ddimAdim'], data= modelDelayLogitFit.predict(airlineQ3)) 
@@ -109,6 +153,7 @@ modelPredicitonOfDelay['logit_ddimAdim_result'] = np.where(modelPredicitonOfDela
 # Make a cross table
 print(pd.crosstab(airlineQ3.Satisfaction, modelPredicitonOfDelay.logit_ddimAdim_result,
 rownames=['Actual'], colnames=['Predicted'], margins = True))
+
 #%% [markdown]
 # cut-off_0.4\
 # Accuracy    = (TP + TN) / Total = (52231 + 7364) / 129487 = 0.4602392518167847\
@@ -140,9 +185,9 @@ rownames=['Actual'], colnames=['Predicted'], margins = True))
 # Recall rate = TP / (TP + FN) = 52892 / (52892 + 3370) = 0.9401016671998862
 
 #%%
-xSatisfaction = airlineQ3[['adim', 'ddim', 'tot', 'datc']]
+xSatisfaction = airlineQ3[['tot', 'datc','adim', 'ddim', 'Class']]
 ySatisfaction = airlineQ3['Satisfaction']
-#%%
+# %%
 sns.set()
 sns.pairplot(xSatisfaction)
 plt.show()
@@ -155,7 +200,7 @@ plt.show()
 #%%
 import seaborn as sns
 # Plot the histogram thanks to the distplot function
-sns.scatterplot(data=airlineQ3, x="adim", y="ddim", hue="Type of Travel")
+sns.scatterplot(data=airlineQ3, x="adim", y="ddim", hue="tot")
 
 #%%
 from sklearn.model_selection import train_test_split
@@ -165,6 +210,12 @@ satisfactionLogit = LogisticRegression()  # instantiate
 satisfactionLogit.fit(x_trainSatisfaction, y_trainSatisfaction)
 print('Logit model accuracy (with the test set):', satisfactionLogit.score(x_testSatisfaction, y_testSatisfaction))
 print('Logit model accuracy (with the train set):', satisfactionLogit.score(x_trainSatisfaction, y_trainSatisfaction))
+#Confusion matrix in scikit-learn
+from sklearn.metrics import confusion_matrix
+from sklearn.metrics import classification_report
+y_pred = satisfactionLogit.predict(x_testSatisfaction)
+print(confusion_matrix(y_testSatisfaction, y_pred))
+print(classification_report(y_testSatisfaction, y_pred))
 #%%
 #####################################################################
 # Receiver Operator Characteristics (ROC)
@@ -193,6 +244,7 @@ plt.plot(lr_fpr, lr_tpr, marker='.', label='Logistic')
 # axis labels
 plt.xlabel('False Positive Rate')
 plt.ylabel('True Positive Rate')
+plt.title("ROC AUC of Satisfaction ~ ddim + adim + C(tot) + C(datc) + C(Class)")
 # show the legend
 plt.legend()
 # show the plot
