@@ -21,7 +21,7 @@ The data source became available in 2018-2019. It includes a training dataset an
 
 - Is there a relationship between total delay time and departure/arrival convenience satisfaction?
 
-- Is there a difference on satisfaction of older travelers between short- and long-distance trips?
+- Is there a difference in satisfaction for older passengers (50+) when comparing short and long distance flights?
 
 ---------------------------
 
