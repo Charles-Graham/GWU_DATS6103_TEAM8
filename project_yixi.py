@@ -320,7 +320,7 @@ print(knnDf)
 plt.plot("knn_num","knn_cv_mean_score", data=knnDf, linestyle='-', marker='o')
 plt.plot("knn_num",'knn_cv_train_score', data=knnDf, marker='o', markerfacecolor='blue', markersize=12, color='skyblue', linewidth=5)
 plt.plot("knn_num",'knn_cv_test_score', data=knnDf, marker='', color='olive', linewidth=2)
-
+plt.title("")
 plt.show() 
   
   
@@ -369,9 +369,7 @@ plt.ylabel(str(index2) + " : " + xSatisfaction.columns[index2])
 plt.grid()
 plt.show()
 # %%
-#####################################################################
-# compare time
-#####################################################################
+
 #%%
 #####################################################################
 # Receiver Operator Characteristics (ROC)
@@ -430,6 +428,18 @@ print(f'svc train score:  {svc.score(X_train,y_train)}')
 print(f'svc test score:  {svc.score(X_test,y_test)}')
 print(confusion_matrix(y_test, svc.predict(X_test)))
 print(classification_report(y_test, svc.predict(X_test)))
+# svc train score:  0.7439839365700458
+# svc test score:  0.747714073891017
+# [[13942  4303]
+#  [ 3864 10263]]
+#               precision    recall  f1-score   support
+
+#            0       0.78      0.76      0.77     18245
+#            1       0.70      0.73      0.72     14127
+
+#     accuracy                           0.75     32372
+#    macro avg       0.74      0.75      0.74     32372
+# weighted avg       0.75      0.75      0.75     32372
 
 #%% SVC kernel="linear"
 svcKernelLinear = SVC(kernel="linear")
@@ -438,6 +448,18 @@ print(f'svcKernelLinear train score:  {svcKernelLinear.score(X_train,y_train)}')
 print(f'svcKernelLinear test score:  {svcKernelLinear.score(X_test,y_test)}')
 print(confusion_matrix(y_test, svcKernelLinear.predict(X_test)))
 print(classification_report(y_test, svcKernelLinear.predict(X_test)))
+# svcKernelLinear train score:  0.7508829737939556
+# svcKernelLinear test score:  0.7541393797108612
+# [[13520  4725]
+#  [ 3234 10893]]
+#               precision    recall  f1-score   support
+
+#            0       0.81      0.74      0.77     18245
+#            1       0.70      0.77      0.73     14127
+
+#     accuracy                           0.75     32372
+#    macro avg       0.75      0.76      0.75     32372
+# weighted avg       0.76      0.75      0.76     32372
 
 #%% LinearSVC()
 linearSVC = LinearSVC()
@@ -446,7 +468,18 @@ print(f'LinearSVC train score:  {linearSVC.score(X_train,y_train)}')
 print(f'LinearSVC test score:  {linearSVC.score(X_test,y_test)}')
 print(confusion_matrix(y_test, linearSVC.predict(X_test)))
 print(classification_report(y_test, linearSVC.predict(X_test)))
+# LinearSVC train score:  0.7593677598723163
+# LinearSVC test score:  0.7622945755591252
+# [[14124  4121]
+#  [ 3574 10553]]
+#               precision    recall  f1-score   support
 
+#            0       0.80      0.77      0.79     18245
+#            1       0.72      0.75      0.73     14127
+
+#     accuracy                           0.76     32372
+#    macro avg       0.76      0.76      0.76     32372
+# weighted avg       0.76      0.76      0.76     32372
 #%% LogisticRegression
 # Apply logistic regression and print scores
 lr = LogisticRegression()
@@ -455,6 +488,19 @@ print(f'lr train score:  {lr.score(X_train,y_train)}')
 print(f'lr test score:  {lr.score(X_test,y_test)}')
 print(confusion_matrix(y_test, lr.predict(X_test)))
 print(classification_report(y_test, lr.predict(X_test)))
+# lr train score:  0.7656077845852854
+# lr test score:  0.7687507722723341
+# [[14152  4093]
+#  [ 3393 10734]]
+#               precision    recall  f1-score   support
+
+#            0       0.81      0.78      0.79     18245
+#            1       0.72      0.76      0.74     14127
+
+#     accuracy                           0.77     32372
+#    macro avg       0.77      0.77      0.77     32372
+# weighted avg       0.77      0.77      0.77     32372
+
 
 #%%
 knn = KNeighborsClassifier(n_neighbors=3)
@@ -463,6 +509,19 @@ print(f'knn train score:  {knn.score(X_train,y_train)}')
 print(f'knn test score:  {knn.score(X_test,y_test)}')
 print(confusion_matrix(y_test, knn.predict(X_test)))
 print(classification_report(y_test, knn.predict(X_test)))
+# knn train score:  0.7563095299387325
+# knn test score:  0.7051155319411837
+# [[13917  4328]
+#  [ 5218  8909]]
+#               precision    recall  f1-score   support
+
+#            0       0.73      0.76      0.74     18245
+#            1       0.67      0.63      0.65     14127
+
+#     accuracy                           0.71     32372
+#    macro avg       0.70      0.70      0.70     32372
+# weighted avg       0.70      0.71      0.70     32372
+
 
 #%% DecisionTreeClassifier
 # Instantiate dtree
@@ -473,9 +532,25 @@ print(f'decisionTreeClassifier train score:  {dtree_digits.score(X_train,y_train
 print(f'decisionTreeClassifier test score:  {dtree_digits.score(X_test,y_test)}')
 print(confusion_matrix(y_test, dtree_digits.predict(X_test)))
 print(classification_report(y_test, dtree_digits.predict(X_test)))
+# decisionTreeClassifier train score:  0.7740101940997786
+# decisionTreeClassifier test score:  0.7645805016681082
+# [[13739  4506]
+#  [ 3115 11012]]
+#               precision    recall  f1-score   support
+
+#            0       0.82      0.75      0.78     18245
+#            1       0.71      0.78      0.74     14127
+
+#     accuracy                           0.76     32372
+#    macro avg       0.76      0.77      0.76     32372
+# weighted avg       0.77      0.76      0.77     32372
+
 
 print("\nReady to continue.")
 #%%
+#####################################################################
+# compare time (Too slow)
+#####################################################################
 import timeit
 def compareCountTimeInDifferentModel(model, compareTimeList):
     def countTime(model):
