@@ -138,7 +138,7 @@ plt.title("Countplot of Departure/Arrival time convenient")
 #####################################################################
 # Logistic Regression model of Satisfaction ~ ddim + adim
 #####################################################################
-modelDelayLogitFit = glm(formula='Satisfaction ~ ddim + adim + C(tot) + C(datc) + C(Class)', data=airlineQ3, family=sm.families.Binomial()).fit()
+modelDelayLogitFit = glm(formula='Satisfaction ~ ddim + adim + C(tot) + C(datc) + C(Class) + ', data=airlineQ3, family=sm.families.Binomial()).fit()
 print( modelDelayLogitFit.summary())
 # Since the p-value is extremely small, Departure Delay in Minutes and Arrival Delay in Minutes have strong relationship with Satisfaction
 modelPredicitonOfDelay = pd.DataFrame( columns=['logit_ddimAdim'], data= modelDelayLogitFit.predict(airlineQ3)) 
@@ -250,7 +250,7 @@ plt.plot(lr_fpr, lr_tpr, marker='.', label='Logistic')
 # axis labels
 plt.xlabel('False Positive Rate')
 plt.ylabel('True Positive Rate')
-plt.title("ROC AUC of Satisfaction ~ ddim + adim + C(tot) + C(datc) + C(Class)")
+plt.title("AUC/ROC of Satisfaction ~ ddim + adim + C(tot) + C(datc) + C(Class)")
 # show the legend
 plt.legend()
 # show the plot
@@ -317,10 +317,13 @@ print(knnDf)
 #%%
 # knnDf.set_index('index', inplace=True)
 #%%
-plt.plot("knn_num","knn_cv_mean_score", data=knnDf, linestyle='-', marker='o')
-plt.plot("knn_num",'knn_cv_train_score', data=knnDf, marker='o', markerfacecolor='blue', markersize=12, color='skyblue', linewidth=5)
-plt.plot("knn_num",'knn_cv_test_score', data=knnDf, marker='', color='olive', linewidth=2)
-plt.title("")
+plt.plot("knn_num","knn_cv_mean_score", data=knnDf, marker='o', label='knn_cv_mean_score')
+plt.plot("knn_num",'knn_cv_train_score', data=knnDf, marker='o', label='knn_cv_train_score')
+plt.plot("knn_num",'knn_cv_test_score', data=knnDf, marker='o',  label='knn_cv_test_score')
+plt.title("Line plot of knn_cv")
+plt.xlabel("KNN-K value")
+plt.ylabel("score")
+plt.legend()
 plt.show() 
   
   
@@ -440,7 +443,7 @@ print(classification_report(y_test, svc.predict(X_test)))
 #     accuracy                           0.75     32372
 #    macro avg       0.74      0.75      0.74     32372
 # weighted avg       0.75      0.75      0.75     32372
-
+# 58m 26.3s
 #%% SVC kernel="linear"
 svcKernelLinear = SVC(kernel="linear")
 svcKernelLinear.fit(X_train, y_train)
@@ -460,7 +463,7 @@ print(classification_report(y_test, svcKernelLinear.predict(X_test)))
 #     accuracy                           0.75     32372
 #    macro avg       0.75      0.76      0.75     32372
 # weighted avg       0.76      0.75      0.76     32372
-
+# 30m 37.8s
 #%% LinearSVC()
 linearSVC = LinearSVC()
 linearSVC.fit(X_train, y_train)
@@ -480,6 +483,7 @@ print(classification_report(y_test, linearSVC.predict(X_test)))
 #     accuracy                           0.76     32372
 #    macro avg       0.76      0.76      0.76     32372
 # weighted avg       0.76      0.76      0.76     32372
+#10.3s
 #%% LogisticRegression
 # Apply logistic regression and print scores
 lr = LogisticRegression()
@@ -500,7 +504,7 @@ print(classification_report(y_test, lr.predict(X_test)))
 #     accuracy                           0.77     32372
 #    macro avg       0.77      0.77      0.77     32372
 # weighted avg       0.77      0.77      0.77     32372
-
+# 0.4s
 
 #%%
 knn = KNeighborsClassifier(n_neighbors=3)
@@ -521,7 +525,7 @@ print(classification_report(y_test, knn.predict(X_test)))
 #     accuracy                           0.71     32372
 #    macro avg       0.70      0.70      0.70     32372
 # weighted avg       0.70      0.71      0.70     32372
-
+# 22.6s
 
 #%% DecisionTreeClassifier
 # Instantiate dtree
@@ -544,7 +548,7 @@ print(classification_report(y_test, dtree_digits.predict(X_test)))
 #     accuracy                           0.76     32372
 #    macro avg       0.76      0.77      0.76     32372
 # weighted avg       0.77      0.76      0.77     32372
-
+#0.2s
 
 print("\nReady to continue.")
 #%%
@@ -558,18 +562,21 @@ def compareCountTimeInDifferentModel(model, compareTimeList):
         model_cv_acc = cross_val_score(model, X_train, y_train, cv= 10, scoring='accuracy', n_jobs = -1)
         result = model_cv_acc
     meanTime = timeit.timeit(lambda: countTime(model), number = 7)/7
+    # meanTime = timeit.timeit(lambda: countTime(model), number = 1)
     compareTimeList.append(meanTime)
     print(f"Execution time is: {meanTime}")
     print(f'\n{model} CV accuracy score: {result}\n')
+    return compareTimeList
 #%%
-modelList = [svc,svcKernelLinear,linearSVC,lr,knn,dtree_digits]
+# modelList = [svc,svcKernelLinear,linearSVC,lr,knn,dtree_digits]
+modelList = [lr,knn,dtree_digits]
 compareTimeList =[]
 #%% 
 for i in modelList:
-    compareCountTimeInDifferentModel(i,compareTimeList)
+    compareTimeList = compareCountTimeInDifferentModel(i,compareTimeList)
 # %%
-colName = ["svc","svcKernelLinear","linearSVC","lr","knn","dtree_digits"]
-# colName = ["knn","dtree_digits"]
+# colName = ["svc","svcKernelLinear","linearSVC","lr","knn","dtree_digits"]
+colName = ["lr","knn","dtree_digits"]
 finalResult = pd.DataFrame([compareTimeList],columns=colName)
 finalResult
 #%%
