@@ -135,35 +135,37 @@ plt.title("Countplot of Departure/Arrival time convenient")
 
 #%%
 #####################################################################
-# Logistic Regression model of Satisfaction ~ ddim + adim + C(tot) + C(datc) + C(Class)
+# Logistic Regression model of Satisfaction ~ ddim + adim + C(tot) + datc + C(Class)
 #####################################################################
 import statsmodels.api as sm 
 from statsmodels.formula.api import glm
-modelDelayLogitFit = glm(formula='Satisfaction ~ ddim + adim + C(tot) + C(datc) + C(Class)', data=airlineQ3, family=sm.families.Binomial()).fit()
+modelDelayLogitFit = glm(formula='Satisfaction ~ ddim + adim + C(tot) + datc + C(Class)', data=airlineQ3, family=sm.families.Binomial()).fit()
 print( modelDelayLogitFit.summary())
 # Since the p-value is extremely small, Departure Delay in Minutes and Arrival Delay in Minutes have strong relationship with Satisfaction
-modelPredicitonOfDelay = pd.DataFrame( columns=['logit_ddimAdim'], data= modelDelayLogitFit.predict(airlineQ3)) 
-print(dfChkBasics(modelPredicitonOfDelay))
-#%%
-# Confusion matrix
-# Define cut-off value
-cut_off = 0.4
-# Compute class predictions
-modelPredicitonOfDelay['logit_ddimAdim_result'] = np.where(modelPredicitonOfDelay['logit_ddimAdim'] > cut_off, 1, 0)
+
 # %%
 # Make a cross table
-crossTable = pd.crosstab(airlineQ3['Satisfaction'], modelPredicitonOfDelay['logit_ddimAdim_result'],
-rownames=['Actual'], colnames=['Predicted'], margins = True)
-print(crossTable)
-TP = crossTable.iloc[1,1]
-TN = crossTable.iloc[0,0]
-Total = crossTable.iloc[2,2]
-FP = crossTable.iloc[0,1]
-FN = crossTable.iloc[1,0]
-print(f'Accuracy = (TP + TN) / Total = {(TP + TN) / Total}')
-print(f'Precision = TP / (TP + FP) = {TP / (TP + FP)}')
-print(f'Recall rate = TP / (TP + FN) = {TP / (TP + FN)}')
+def showCrossTable(df, modelLogitFit, cut_off):
+  modelPrediciton = pd.DataFrame(data= modelLogitFit.predict(df)) 
+  # print(dfChkBasics(modelPrediciton))
+  # Confusion matrix
+  # Compute class predictions
+  modelPrediciton[0] = np.where(modelPrediciton[0] > cut_off, 1, 0)
+  crossTable = pd.crosstab(df['Satisfaction'], modelPrediciton[0],
+  rownames=['Actual'], colnames=['Predicted'], margins = True)
+  print(crossTable)
+  TP = crossTable.iloc[1,1]
+  TN = crossTable.iloc[0,0]
+  Total = crossTable.iloc[2,2]
+  FP = crossTable.iloc[0,1]
+  FN = crossTable.iloc[1,0]
+  print(f'Accuracy = (TP + TN) / Total = {(TP + TN) / Total}')
+  print(f'Precision = TP / (TP + FP) = {TP / (TP + FP)}')
+  print(f'Recall rate = TP / (TP + FN) = {TP / (TP + FN)}')
 
+#%%
+showCrossTable(airlineQ3,modelDelayLogitFit,0.4)
+showCrossTable(airlineQ3,modelDelayLogitFit,0.73)
 #%%
 #%% 
 #####################################################################
