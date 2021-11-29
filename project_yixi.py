@@ -96,8 +96,7 @@ airlineQ3['Class'] = airlineQ3['Class'].map(lambda x : 0 if x == 'Business' else
 # How does the time affect the airline satisfaction?
 #
 #####################################################################
-import statsmodels.api as sm 
-from statsmodels.formula.api import glm
+
 #%% 
 #####################################################################
 # Anova of ddim + adim + datc
@@ -136,9 +135,11 @@ plt.title("Countplot of Departure/Arrival time convenient")
 
 #%%
 #####################################################################
-# Logistic Regression model of Satisfaction ~ ddim + adim
+# Logistic Regression model of Satisfaction ~ ddim + adim + C(tot) + C(datc) + C(Class)
 #####################################################################
-modelDelayLogitFit = glm(formula='Satisfaction ~ ddim + adim + C(tot) + C(datc) + C(Class) + ', data=airlineQ3, family=sm.families.Binomial()).fit()
+import statsmodels.api as sm 
+from statsmodels.formula.api import glm
+modelDelayLogitFit = glm(formula='Satisfaction ~ ddim + adim + C(tot) + C(datc) + C(Class)', data=airlineQ3, family=sm.families.Binomial()).fit()
 print( modelDelayLogitFit.summary())
 # Since the p-value is extremely small, Departure Delay in Minutes and Arrival Delay in Minutes have strong relationship with Satisfaction
 modelPredicitonOfDelay = pd.DataFrame( columns=['logit_ddimAdim'], data= modelDelayLogitFit.predict(airlineQ3)) 
@@ -151,14 +152,18 @@ cut_off = 0.4
 modelPredicitonOfDelay['logit_ddimAdim_result'] = np.where(modelPredicitonOfDelay['logit_ddimAdim'] > cut_off, 1, 0)
 # %%
 # Make a cross table
-print(pd.crosstab(airlineQ3.Satisfaction, modelPredicitonOfDelay.logit_ddimAdim_result,
-rownames=['Actual'], colnames=['Predicted'], margins = True))
+crossTable = pd.crosstab(airlineQ3['Satisfaction'], modelPredicitonOfDelay['logit_ddimAdim_result'],
+rownames=['Actual'], colnames=['Predicted'], margins = True)
+print(crossTable)
+TP = crossTable.iloc[1,1]
+TN = crossTable.iloc[0,0]
+Total = crossTable.iloc[2,2]
+FP = crossTable.iloc[0,1]
+FN = crossTable.iloc[1,0]
+print(f'Accuracy = (TP + TN) / Total = {(TP + TN) / Total}')
+print(f'Precision = TP / (TP + FP) = {TP / (TP + FP)}')
+print(f'Recall rate = TP / (TP + FN) = {TP / (TP + FN)}')
 
-#%% [markdown]
-# cut-off_0.4\
-# Accuracy    = (TP + TN) / Total = (52231 + 7364) / 129487 = 0.4602392518167847\
-# Precision   = TP / (TP + FP) = 52231 / (52231 + 65861) = 0.4422907563594486\
-# Recall rate = TP / (TP + FN) = 52231 / (52231 + 4031) = 0.9283530624577868
 #%%
 #%% 
 #####################################################################
@@ -176,13 +181,17 @@ cut_off = 0.4
 modelPredicitonOfDelay['logit_tdim_result'] = np.where(modelPredicitonOfDelay['logit_tdim'] > cut_off, 1, 0)
 # %%
 # Make a cross table
-print(pd.crosstab(airlineQ3['Satisfaction'], modelPredicitonOfDelay['logit_tdim_result'],
-rownames=['Actual'], colnames=['Predicted'], margins = True))
-#%% [markdown]
-# cut-off_0.4\
-# Accuracy    = (TP + TN) / Total = (52892 + 6047) / 129487 = 0.45517310618054324\
-# Precision   = TP / (TP + FP) = 52892 / (52892 + 67178) = 0.4405097026734405\
-# Recall rate = TP / (TP + FN) = 52892 / (52892 + 3370) = 0.9401016671998862
+crossTable = pd.crosstab(airlineQ3['Satisfaction'], modelPredicitonOfDelay['logit_tdim_result'],
+rownames=['Actual'], colnames=['Predicted'], margins = True)
+print(crossTable)
+TP = crossTable.iloc[1,1]
+TN = crossTable.iloc[0,0]
+Total = crossTable.iloc[2,2]
+FP = crossTable.iloc[0,1]
+FN = crossTable.iloc[1,0]
+print(f'Accuracy = (TP + TN) / Total = {(TP + TN) / Total}')
+print(f'Precision = TP / (TP + FP) = {TP / (TP + FP)}')
+print(f'Recall rate = TP / (TP + FN) = {TP / (TP + FN)}')
 
 #%%
 xSatisfaction = airlineQ3[['tot', 'datc','adim', 'ddim', 'Class']]
