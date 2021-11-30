@@ -11,6 +11,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 import scipy.stats as st
+from statsmodels.genmod.families import family
 
 def dfChkBasics(dframe, valCnt = False): 
   cnt = 1
@@ -126,15 +127,16 @@ fig, ax = plt.subplots(figsize=(15,15))
 sns.heatmap(df.corr(method="spearman"),annot=True,fmt = ".2g",ax=ax)
 # From the heat map it is evident that the Online boarding rating has comparatively the strongest correlation with satisfaction compared to the rest of the variables. 
 # %%
-# from statsmodels.formula.api import glm
+from statsmodels.formula.api import glm
 from statsmodels.formula.api import ols
 import statsmodels.api as sm
+import dataframe_image as dfi
 df1 = airline
 df1.columns = airline.columns.str.replace(" ","_")
 df1.columns = airline.columns.str.replace("-","_")
 df1.columns = airline.columns.str.replace("/","_")
 df1.var()
-satisLogit = ols(formula='satisfaction ~ Inflight_wifi_service + Departure_Arrival_time_convenient + Ease_of_Online_booking + Gate_location + Food_and_drink + Online_boarding + Seat_comfort + Inflight_entertainment + On_board_service + Leg_room_service + Baggage_handling + Checkin_service + Inflight_service + Cleanliness', data=df1)
+satisLogit = glm(formula='satisfaction ~ Inflight_wifi_service + Departure_Arrival_time_convenient + Ease_of_Online_booking + Gate_location + Food_and_drink + Online_boarding + Seat_comfort + Inflight_entertainment + On_board_service + Leg_room_service + Baggage_handling + Checkin_service + Cleanliness', data=df1,family=sm.families.Binomial())
 satisLogitfit = satisLogit.fit()
 print(satisLogitfit.summary())
 np.exp(satisLogitfit.params)
