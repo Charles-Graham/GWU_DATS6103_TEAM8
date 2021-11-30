@@ -78,7 +78,7 @@ airline["Satisfaction"] = temp
 # airline.to_csv("airline.csv")
 
 # %%
-# Charles ~ 4) Are older travelers (>=50) more satisfied with short- or long-distance trips? If so, what could be contributing to this?
+# Charles ~ 4) Is there a difference in satisfaction for older passengers (50+) when comparing short and long distance flights?
 
 # Prepare data frames for older passengers (We will define this as 50 and over)
 oldairline = airline[airline["Age"] >= 50]; oldairline.reset_index(inplace=True)
@@ -133,12 +133,22 @@ dfChkBasics(predictmodel_old)
 
 # Confusion matrix
 # Define cut off
-cutoff = 0.4
+cutoff = 0.5
 # Model predictions
 predictmodel_old["logit_fdist_result"] = np.where(predictmodel_old["logit_fdist"] > cutoff, 1, 0)
 # Make a cross table
-print(pd.crosstab(oldairline["Satisfaction"], predictmodel_old["logit_fdist_result"],
-rownames=["Actual"], colnames=["Predicted"], margins = True))
+crosstable = pd.crosstab(oldairline["Satisfaction"], predictmodel_old["logit_fdist_result"],
+rownames=["Actual"], colnames=["Predicted"], margins = True)
+
+print(crosstable)
+TP = crosstable.iloc[1,1]
+TN = crosstable.iloc[0,0]
+Total = crosstable.iloc[2,2]
+FP = crosstable.iloc[0,1]
+FN = crosstable.iloc[1,0]
+print(f'Accuracy = (TP + TN) / Total = {(TP + TN) / Total}')
+print(f'Precision = TP / (TP + FP) = {TP / (TP + FP)}')
+print(f'Recall rate = TP / (TP + FN) = {TP / (TP + FN)}')
 
 # %%
 from sklearn.linear_model import LogisticRegression
