@@ -125,24 +125,6 @@ plt.title("Countplot of Departure/Arrival time convenient")
 
 
 
-
-
-
-
-
-
-
-
-#%%
-#####################################################################
-# Logistic Regression model of Satisfaction ~ ddim + adim + C(tot) + datc + C(Class)
-#####################################################################
-import statsmodels.api as sm 
-from statsmodels.formula.api import glm
-modelDelayLogitFit = glm(formula='Satisfaction ~ ddim + adim + C(tot) + datc + C(Class)', data=airlineQ3, family=sm.families.Binomial()).fit()
-print( modelDelayLogitFit.summary())
-# Since the p-value is extremely small, Departure Delay in Minutes and Arrival Delay in Minutes have strong relationship with Satisfaction
-
 # %%
 # Make a cross table
 def showCrossTable(df, modelLogitFit, cut_off):
@@ -162,10 +144,45 @@ def showCrossTable(df, modelLogitFit, cut_off):
   print(f'Accuracy = (TP + TN) / Total = {(TP + TN) / Total}')
   print(f'Precision = TP / (TP + FP) = {TP / (TP + FP)}')
   print(f'Recall rate = TP / (TP + FN) = {TP / (TP + FN)}')
+  print(f'F1 code = TP / (TP + (FP + FN)/2) = {TP / (TP + (FP + FN)/2)}')
+
+
+
+
+
+
+
+
+
+
+
 
 #%%
-showCrossTable(airlineQ3,modelDelayLogitFit,0.4)
-showCrossTable(airlineQ3,modelDelayLogitFit,0.73)
+#####################################################################
+# Logistic Regression model of Satisfaction ~ ddim + adim
+#####################################################################
+import statsmodels.api as sm 
+from statsmodels.formula.api import glm
+modelDelayLogitFitOrigin = glm(formula='Satisfaction ~ ddim + adim', data=airlineQ3, family=sm.families.Binomial()).fit()
+print( modelDelayLogitFitOrigin.summary())
+# Since the p-value is extremely small, Departure Delay in Minutes and Arrival Delay in Minutes have strong relationship with Satisfaction
+showCrossTable(airlineQ3,modelDelayLogitFitOrigin,0.4)
+
+
+#%%
+#####################################################################
+# Logistic Regression model of Satisfaction ~ ddim + adim + C(tot) + datc + C(Class)
+#####################################################################
+import statsmodels.api as sm 
+from statsmodels.formula.api import glm
+modelDelayLogitFit = glm(formula='Satisfaction ~ ddim + adim + C(tot) + datc + C(Class)', data=airlineQ3, family=sm.families.Binomial()).fit()
+print( modelDelayLogitFit.summary())
+# Since the p-value is extremely small, Departure Delay in Minutes and Arrival Delay in Minutes have strong relationship with Satisfaction
+
+
+#%%
+showCrossTable(airlineQ3,modelDelayLogitFit,0.5)
+# showCrossTable(airlineQ3,modelDelayLogitFit,0.73)
 #%%
 #%% 
 #####################################################################
@@ -173,29 +190,11 @@ showCrossTable(airlineQ3,modelDelayLogitFit,0.73)
 #####################################################################
 modelDelayTdimLogitFit = glm(formula='Satisfaction ~ tdim', data=airlineQ3, family=sm.families.Binomial()).fit()
 print( modelDelayTdimLogitFit.summary())
-# Since the p-value is extremely small, Departure Delay in Minutes and Arrival Delay in Minutes have strong relationship with Satisfaction
-modelPredicitonOfDelay['logit_tdim'] = modelDelayTdimLogitFit.predict(airlineQ3)
-print(dfChkBasics(modelPredicitonOfDelay))
-# Confusion matrix
-# Define cut-off value
-cut_off = 0.4
-# Compute class predictions
-modelPredicitonOfDelay['logit_tdim_result'] = np.where(modelPredicitonOfDelay['logit_tdim'] > cut_off, 1, 0)
-# %%
-# Make a cross table
-crossTable = pd.crosstab(airlineQ3['Satisfaction'], modelPredicitonOfDelay['logit_tdim_result'],
-rownames=['Actual'], colnames=['Predicted'], margins = True)
-print(crossTable)
-TP = crossTable.iloc[1,1]
-TN = crossTable.iloc[0,0]
-Total = crossTable.iloc[2,2]
-FP = crossTable.iloc[0,1]
-FN = crossTable.iloc[1,0]
-print(f'Accuracy = (TP + TN) / Total = {(TP + TN) / Total}')
-print(f'Precision = TP / (TP + FP) = {TP / (TP + FP)}')
-print(f'Recall rate = TP / (TP + FN) = {TP / (TP + FN)}')
+#%%
+showCrossTable(airlineQ3,modelDelayTdimLogitFit,0.4)
 
 #%%
+# xSatisfaction = airlineQ3[['tot', 'datc', 'Class']]
 xSatisfaction = airlineQ3[['tot', 'datc','adim', 'ddim', 'Class']]
 ySatisfaction = airlineQ3['Satisfaction']
 # %%
@@ -233,6 +232,35 @@ print(f'\nLogisticRegression CV accuracy score: {lr_cv_acc}\n')
 y_pred = satisfactionLogit.predict(X_test)
 print(confusion_matrix(y_test, y_pred))
 print(classification_report(y_test, y_pred))
+
+#%%
+from mlxtend.plotting import plot_decision_regions
+import matplotlib.pyplot as plt
+from sklearn import datasets
+from sklearn.svm import SVC
+
+value = 2.5
+width = 0.75
+
+# Plotting decision regions
+plot_decision_regions(xSatisfaction.to_numpy(), ySatisfaction.to_numpy(), clf=satisfactionLogit, legend=2, 
+                      filler_feature_values={2: value, 3: 1.5},
+                      filler_feature_ranges={2: width, 3: 0.5},)
+
+# Adding axes annotations
+plt.xlabel('sepal length [cm]')
+plt.ylabel('petal length [cm]')
+plt.title('SVM on Iris')
+plt.show()
+
+
+
+
+
+
+
+
+
 #%%
 #####################################################################
 # Receiver Operator Characteristics (ROC)
@@ -261,7 +289,7 @@ plt.plot(lr_fpr, lr_tpr, marker='.', label='Logistic')
 # axis labels
 plt.xlabel('False Positive Rate')
 plt.ylabel('True Positive Rate')
-plt.title("AUC/ROC of Satisfaction ~ ddim + adim + C(tot) + C(datc) + C(Class)")
+plt.title("AUC/ROC of Satisfaction ~ ddim + adim + C(tot) + datc + C(Class)")
 # show the legend
 plt.legend()
 # show the plot
@@ -294,7 +322,7 @@ print(confusion_matrix(y_test, knn.predict(X_test)))
 print(classification_report(y_test, knn.predict(X_test)))
 ##################################################
 #%%
-# 7-KNN algorithm
+# x-KNN algorithm
 # The best way
 def knnBest(num, knnDf):
   mrroger = num
@@ -329,11 +357,11 @@ print(knnDf)
 # knnDf.set_index('index', inplace=True)
 #%%
 plt.plot("knn_num","knn_cv_mean_score", data=knnDf, marker='o', label='knn_cv_mean_score')
-plt.plot("knn_num",'knn_cv_train_score', data=knnDf, marker='o', label='knn_cv_train_score')
-plt.plot("knn_num",'knn_cv_test_score', data=knnDf, marker='o',  label='knn_cv_test_score')
+plt.plot("knn_num",'knn_cv_train_score', data=knnDf, marker='o', label='knn_train_score')
+plt.plot("knn_num",'knn_cv_test_score', data=knnDf, marker='o',  label='knn_test_score')
 plt.title("Line plot of knn_cv")
 plt.xlabel("KNN-K value")
-plt.ylabel("score")
+plt.ylabel("accuracy")
 plt.legend()
 plt.show() 
   
@@ -518,29 +546,29 @@ print(classification_report(y_test, lr.predict(X_test)))
 # 0.4s
 
 #%%
-knn = KNeighborsClassifier(n_neighbors=3)
+knn = KNeighborsClassifier(n_neighbors=9)
 knn.fit(X_train, y_train)
 print(f'knn train score:  {knn.score(X_train,y_train)}')
 print(f'knn test score:  {knn.score(X_test,y_test)}')
 print(confusion_matrix(y_test, knn.predict(X_test)))
 print(classification_report(y_test, knn.predict(X_test)))
-# knn train score:  0.7563095299387325
-# knn test score:  0.7051155319411837
-# [[13917  4328]
-#  [ 5218  8909]]
+# knn train score:  0.761591927096741
+# knn test score:  0.7372111701470406
+# [[14119  4126]
+#  [ 4381  9746]]
 #               precision    recall  f1-score   support
 
-#            0       0.73      0.76      0.74     18245
-#            1       0.67      0.63      0.65     14127
+#            0       0.76      0.77      0.77     18245
+#            1       0.70      0.69      0.70     14127
 
-#     accuracy                           0.71     32372
-#    macro avg       0.70      0.70      0.70     32372
-# weighted avg       0.70      0.71      0.70     32372
+#     accuracy                           0.74     32372
+#    macro avg       0.73      0.73      0.73     32372
+# weighted avg       0.74      0.74      0.74     32372
 # 22.6s
 
 #%% DecisionTreeClassifier
 # Instantiate dtree
-dtree_digits = DecisionTreeClassifier(max_depth=12, criterion="entropy", random_state=1)
+dtree_digits = DecisionTreeClassifier(max_depth=6, criterion="entropy", random_state=1)
 # Fit dt to the training set
 dtree_digits.fit(X_train,y_train)
 print(f'decisionTreeClassifier train score:  {dtree_digits.score(X_train,y_train)}')
@@ -580,14 +608,14 @@ def compareCountTimeInDifferentModel(model, compareTimeList):
     return compareTimeList
 #%%
 # modelList = [svc,svcKernelLinear,linearSVC,lr,knn,dtree_digits]
-modelList = [lr,knn,dtree_digits]
+modelList = [linearSVC,lr,knn,dtree_digits]
 compareTimeList =[]
 #%% 
 for i in modelList:
     compareTimeList = compareCountTimeInDifferentModel(i,compareTimeList)
 # %%
 # colName = ["svc","svcKernelLinear","linearSVC","lr","knn","dtree_digits"]
-colName = ["lr","knn","dtree_digits"]
+colName = ["linearSVC","lr","knn","dtree_digits"]
 finalResult = pd.DataFrame([compareTimeList],columns=colName)
 finalResult
 #%%
