@@ -16,7 +16,6 @@ test = pd.read_csv('test.csv', index_col=0)
 
 airline = pd.concat([train,test],ignore_index=True)
 
-
 #Check any existing null values
 for i in airline:
   print(i + ' has ' + str(airline[i].isnull().sum()) + ' nulls')
@@ -85,9 +84,9 @@ airlineQ3['ct'] = np.where(airlineQ3['ct'] == 'Loyal Customer', 0, 1)
 airlineQ3['Class'] = airlineQ3['Class'].map(lambda x : 0 if x == 'Business' else 1 if x == 'Eco' else 2)
 #%%
 # heatmap
-#sns.heatmap(airlineQ3.loc[:, ~airlineQ3.columns.isin(['id','Age'])], annot=True)
-#corr_matrix=airlineQ3.loc[:,['Gender','tot','ct']]
-#sns.heatmap(airlineQ3.loc[:,['Gender','tot','ct']], annot=True)
+plt.figure(figsize=(20,15))
+sns.heatmap(airlineQ3.corr(),annot=True,cmap='YlGnBu')
+plt.tight_layout
 # reindex
 #airlineQ3.reset_index(drop=True, inplace=True)
 #%%
@@ -120,11 +119,6 @@ plt.ylabel("Arrival Delay in Minutes")
 sns.countplot(data=airline, x="Departure/Arrival time convenient", hue="Satisfaction")
 plt.title("Countplot of Departure/Arrival time convenient")
 
-
-
-
-
-
 # %%
 # Make a cross table
 def showCrossTable(df, modelLogitFit, cut_off):
@@ -144,17 +138,7 @@ def showCrossTable(df, modelLogitFit, cut_off):
   print(f'Accuracy = (TP + TN) / Total = {(TP + TN) / Total}')
   print(f'Precision = TP / (TP + FP) = {TP / (TP + FP)}')
   print(f'Recall rate = TP / (TP + FN) = {TP / (TP + FN)}')
-  print(f'F1 code = TP / (TP + (FP + FN)/2) = {TP / (TP + (FP + FN)/2)}')
-
-
-
-
-
-
-
-
-
-
+  print(f'F1 score = TP / (TP + (FP + FN)/2) = {TP / (TP + (FP + FN)/2)}')
 
 
 #%%
@@ -171,11 +155,11 @@ showCrossTable(airlineQ3,modelDelayLogitFitOrigin,0.4)
 
 #%%
 #####################################################################
-# Logistic Regression model of Satisfaction ~ ddim + adim + C(tot) + datc + C(Class)
+# Logistic Regression model of Satisfaction ~ tdim + C(tot) + datc + C(Class)
 #####################################################################
 import statsmodels.api as sm 
 from statsmodels.formula.api import glm
-modelDelayLogitFit = glm(formula='Satisfaction ~ ddim + adim + C(tot) + datc + C(Class)', data=airlineQ3, family=sm.families.Binomial()).fit()
+modelDelayLogitFit = glm(formula='Satisfaction ~ tdim + C(tot) + datc + C(Class)', data=airlineQ3, family=sm.families.Binomial()).fit()
 print( modelDelayLogitFit.summary())
 # Since the p-value is extremely small, Departure Delay in Minutes and Arrival Delay in Minutes have strong relationship with Satisfaction
 
@@ -195,7 +179,7 @@ showCrossTable(airlineQ3,modelDelayTdimLogitFit,0.4)
 
 #%%
 # xSatisfaction = airlineQ3[['tot', 'datc', 'Class']]
-xSatisfaction = airlineQ3[['tot', 'datc','adim', 'ddim', 'Class']]
+xSatisfaction = airlineQ3[['tot', 'datc','tdim', 'Class']]
 ySatisfaction = airlineQ3['Satisfaction']
 # %%
 sns.set()
@@ -233,32 +217,21 @@ y_pred = satisfactionLogit.predict(X_test)
 print(confusion_matrix(y_test, y_pred))
 print(classification_report(y_test, y_pred))
 
-#%%
-from mlxtend.plotting import plot_decision_regions
-import matplotlib.pyplot as plt
-from sklearn import datasets
-from sklearn.svm import SVC
+#%% doesn't work
+# from mlxtend.plotting import plot_decision_regions
+# import matplotlib.pyplot as plt
+# value = 2.5
+# width = 0.75
+# # Plotting decision regions
+# plot_decision_regions(xSatisfaction.to_numpy(), ySatisfaction.to_numpy(), clf=satisfactionLogit, legend=2, 
+#                       filler_feature_values={2: value, 3: value, 4: value},
+#                       filler_feature_ranges={2: width, 3: width, 4: width},)
 
-value = 2.5
-width = 0.75
-
-# Plotting decision regions
-plot_decision_regions(xSatisfaction.to_numpy(), ySatisfaction.to_numpy(), clf=satisfactionLogit, legend=2, 
-                      filler_feature_values={2: value, 3: 1.5},
-                      filler_feature_ranges={2: width, 3: 0.5},)
-
-# Adding axes annotations
-plt.xlabel('sepal length [cm]')
-plt.ylabel('petal length [cm]')
-plt.title('SVM on Iris')
-plt.show()
-
-
-
-
-
-
-
+# # Adding axes annotations
+# plt.xlabel('')
+# plt.ylabel('')
+# plt.title('Logistic on airline')
+# plt.show()
 
 
 #%%
@@ -289,7 +262,7 @@ plt.plot(lr_fpr, lr_tpr, marker='.', label='Logistic')
 # axis labels
 plt.xlabel('False Positive Rate')
 plt.ylabel('True Positive Rate')
-plt.title("AUC/ROC of Satisfaction ~ ddim + adim + C(tot) + datc + C(Class)")
+plt.title("AUC/ROC of Satisfaction ~ tdim + C(tot) + datc + C(Class)")
 # show the legend
 plt.legend()
 # show the plot
@@ -349,7 +322,8 @@ colName = ['knn_num','knn_cv_mean_score','knn_cv_train_score','knn_cv_test_score
 knnDf = pd.DataFrame(columns=colName)
 # knnDf.set_index('knn_num', inplace=True)
 for i in range(3,20):
-  knnDf = knnBest(i,knnDf)
+  if i%2 == 1:
+    knnDf = knnBest(i,knnDf)
   
 
 print(knnDf) 
@@ -378,7 +352,7 @@ xsSatisfaction = pd.DataFrame( scale(xSatisfaction), columns=xSatisfaction.colum
 # Need to reconstruct the pandas df with column names
 ysSatisfaction = ySatisfaction.copy()  # no need to scale y, but make a true copy / deep copy to be safe
 #%%
-knn_scv = KNeighborsClassifier(n_neighbors=mrroger) # instantiate with n value given
+knn_scv = KNeighborsClassifier(n_neighbors=9) # instantiate with n value given
 X_train_s, X_test_s, y_train_s, y_test_s = train_test_split(xsSatisfaction, ySatisfaction, random_state=1 )
 knn_scv.fit(X_train_s, y_train_s)
 scv_results = cross_val_score(knn_scv, xsSatisfaction, ysSatisfaction, cv=5, n_jobs = -1)
@@ -410,41 +384,6 @@ plt.xlabel(str(index1) + " : " + xSatisfaction.columns[index1])
 plt.ylabel(str(index2) + " : " + xSatisfaction.columns[index2])
 plt.grid()
 plt.show()
-# %%
-
-#%%
-#####################################################################
-# Receiver Operator Characteristics (ROC)
-# Area Under the Curve (AUC)
-#####################################################################
-def rocAuc(model):
-  # generate a no skill prediction (majority class)
-  ns_probs = [0 for _ in range(len(y_test))]
-  # predict probabilities
-  lr_probs = model.predict_proba(X_test)
-  # keep probabilities for the positive outcome only
-  lr_probs = lr_probs[:, 1]
-  # calculate scores
-  ns_auc = roc_auc_score(y_test, ns_probs)
-  lr_auc = roc_auc_score(y_test, lr_probs)
-  # summarize scores
-  print('No Skill: ROC AUC=%.3f' % (ns_auc))
-  print('Logistic: ROC AUC=%.3f' % (lr_auc))
-  # calculate roc curves
-  ns_fpr, ns_tpr, _ = roc_curve(y_test, ns_probs)
-  lr_fpr, lr_tpr, _ = roc_curve(y_test, lr_probs)
-  # plot the roc curve for the model
-  plt.plot(ns_fpr, ns_tpr, linestyle='--', label='No Skill')
-  plt.plot(lr_fpr, lr_tpr, marker='.', label='Logistic')
-  # axis labels
-  plt.xlabel('False Positive Rate')
-  plt.ylabel('True Positive Rate')
-  plt.title("ROC AUC of Satisfaction ~ ddim + adim + C(tot) + C(datc) + C(Class)")
-  # show the legend
-  plt.legend()
-  # show the plot
-  plt.show()
-
 
 # %%
 from sklearn.linear_model import LogisticRegression
@@ -546,7 +485,7 @@ print(classification_report(y_test, lr.predict(X_test)))
 # 0.4s
 
 #%%
-knn = KNeighborsClassifier(n_neighbors=9)
+knn = KNeighborsClassifier(n_neighbors=13)
 knn.fit(X_train, y_train)
 print(f'knn train score:  {knn.score(X_train,y_train)}')
 print(f'knn test score:  {knn.score(X_test,y_test)}')
