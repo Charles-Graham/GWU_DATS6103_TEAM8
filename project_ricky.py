@@ -75,7 +75,8 @@ airline['Satisfaction'] = temp
 
 #%%
 airline.to_csv('airline.csv')
-
+#%%
+dfChkBasics(airline)
 #%%
 #Summary
 
@@ -213,7 +214,7 @@ airline_predictions
 cut_off = 0.5
 # Compute class predictions
 airline_predictions['satisfaction_div'] = np.where(airline_predictions['sm_logit_pred'] > cut_off, 1, 0)
-print(airline_predictions.satisfaction_div.head())
+#print(airline_predictions.satisfaction_div.head())
 
 # Make a cross table
 print(pd.crosstab(airline.Satisfaction_satisfied, airline_predictions.satisfaction_div,
