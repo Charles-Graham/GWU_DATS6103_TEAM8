@@ -8,6 +8,7 @@
 ### Preprocess
 #Combine original train and test datasets
 
+from numpy.core.fromnumeric import mean, std
 import pandas as pd
 
 train = pd.read_csv('train.csv', index_col=0)
@@ -88,7 +89,7 @@ from statsmodels.graphics.gofplots import qqplot
 
 #Check the basic info of the dataset, see the data columns, their types, and the shape
 airline = pd.read_csv('airline.csv', index_col=0)
-dfChkBasics(airline)
+airline.shape
 
 # %%
 #pivot table of customer types by types of travels valued by average flight distance
@@ -128,7 +129,7 @@ airline.loc[airline['Age'] > 60, 'Age_Range'] = '>60'
 #Barplot shows customers' age ranges
 fig, axs = plt.subplots() 
 sns.set_style(style="whitegrid")
-sns.countplot(x="Age_Range", data=airline)
+sns.countplot(x="Age_Range", data=airline, order=airline['Age_Range'].value_counts().index)
 plt.title('Customers in Different Ranges of Ages')
 plt.show()
 
@@ -195,6 +196,10 @@ from sklearn.model_selection import cross_val_score, GridSearchCV
 from sklearn.linear_model import LogisticRegression
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import classification_report
+from sklearn.metrics import roc_auc_score, roc_curve
+import matplotlib.pyplot as plt
+import seaborn as sns
 
 #%%
 # Logit Regression?
@@ -208,8 +213,8 @@ Satisfaction_Class_Model_Fit = Satisfaction_Class_Model.fit()
 print(Satisfaction_Class_Model_Fit.summary())
 
 airline_predictions = pd.DataFrame( columns=['sm_logit_pred'], data= Satisfaction_Class_Model_Fit.predict(airline)) 
+airline_predictions['actual'] = airline['Satisfaction_satisfied']
 airline_predictions
-
 #%%
 cut_off = 0.5
 # Compute class predictions
@@ -223,28 +228,8 @@ margins = True))
 
 #0.75 accuracy
 
-
-
 #%%
-y = airline['Satisfaction_satisfied']
-X = airline['Class_Number']
-train_logit_model=sm.Logit(y,X)
-result=train_logit_model.fit()
-print(result.summary2())
-#%%
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=0)
-logreg = LogisticRegression()
-
-x = np.array(X_train.values.tolist()).reshape(-1,1)
-y = np.array(y_train.values.tolist()).reshape(-1,1)
-
-x_t = np.array(X_test.values.tolist()).reshape(-1,1)
-y_t = np.array(y_test.values.tolist()).reshape(-1,1)
-
-logreg.fit(x, y)
-
-y_pred = logreg.predict(x_t)
-print('Accuracy of logistic regression classifier on test set: {:.2f}'.format(logreg.score(x_t, y_t)))
+print('stats olm 0.75 accuracy')
 
 #%%
 # Classification Tree?
@@ -253,3 +238,208 @@ print('Accuracy of logistic regression classifier on test set: {:.2f}'.format(lo
 
 # Random Forest?
 # Roc Auc test?
+
+#%%
+airline1 = airline.copy()
+airline1 = airline1.rename(columns={"Flight Distance": "Flight_Distance", "Inflight wifi service": "Inflight_wifi_service",
+'Departure/Arrival time convenient': 'Departure_Arrival_time_convenient', 'Ease of Online booking': 'Ease_of_Online_booking',
+'Gate location': 'Gate_location', 'Food and drink': 'Food_and_drink', 'Online boarding': 'Online_boarding',
+'Seat comfort': 'Seat_comfort', 'Inflight entertainment': 'Inflight_entertainment', 'On-board service': 'On_board_service',
+'Leg room service': 'Leg_room_service', 'Baggage handling':'Baggage_handling', 'Checkin service': 'Checkin_service',
+'Inflight service': 'Inflight_service', 'Total Delay in Minutes': 'Total_Delay_in_Minutes'})
+
+#%%
+Satisfaction_Class_Model2 = glm(formula = 'Satisfaction_satisfied ~ Inflight_wifi_service + Departure_Arrival_time_convenient + Ease_of_Online_booking + Gate_location + Food_and_drink + Online_boarding + Seat_comfort + Inflight_entertainment + On_board_service + Leg_room_service + Checkin_service + Inflight_service + C(Class_Number)', data = airline1, family=sm.families.Binomial())
+
+Satisfaction_Class_Model_Fit2 = Satisfaction_Class_Model2.fit()
+print(Satisfaction_Class_Model_Fit2.summary())
+
+airline_predictions2 = pd.DataFrame( columns=['sm_logit_pred'], data= Satisfaction_Class_Model_Fit2.predict(airline1)) 
+airline_predictions2['actual'] = airline['Satisfaction_satisfied']
+airline_predictions2
+#%%
+cut_off = 0.5
+# Compute class predictions
+airline_predictions2['satisfaction_div'] = np.where(airline_predictions2['sm_logit_pred'] > cut_off, 1, 0)
+#print(airline_predictions.satisfaction_div.head())
+
+# Make a cross table
+print(pd.crosstab(airline1.Satisfaction_satisfied, airline_predictions2.satisfaction_div,
+rownames=['Actual'], colnames=['Predicted'],
+margins = True))
+
+#0.84 accuracy if add up the rating scores
+#%%
+
+#Forest using only Class
+
+y = airline['Satisfaction_satisfied']
+X = airline['Class_Number']
+
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=0, shuffle=True)
+
+X_train = np.array(X_train.values.tolist()).reshape(-1,1)
+y_train = np.ravel(y_train)
+
+X_test = np.array(X_test.values.tolist()).reshape(-1,1)
+y_test = np.ravel(y_test)
+
+forest = RandomForestClassifier(n_estimators = 1000, max_depth = 5)
+forest.fit(X_train, y_train)
+y_pred = forest.predict(X_test)
+print("Accuracy:",accuracy_score(y_test, y_pred))
+print(classification_report(y_test, y_pred))
+
+#%%
+class_number = np.array(airline1['Class_Number'].values.tolist()).reshape(-1,1)
+
+airline_predictions3 = pd.DataFrame( columns=['forest_pred'], data=forest.predict(class_number)) 
+airline_predictions3['actual'] = airline1['Satisfaction_satisfied']
+airline_predictions3
+
+#%%
+#ROC AUC Eval
+
+# generate a no skill prediction (majority class)
+ns_probs = [0 for _ in range(len(y_test))]
+# predict probabilities
+lr_probs = forest.predict_proba(X_test)
+# keep probabilities for the positive outcome only
+lr_probs = lr_probs[:, 1]
+# calculate scores
+ns_auc = roc_auc_score(y_test, ns_probs)
+lr_auc = roc_auc_score(y_test, lr_probs)
+# summarize scores
+print('Random Forest: ROC AUC=%.3f' % (lr_auc))
+# calculate roc curves
+ns_fpr, ns_tpr, _ = roc_curve(y_test, ns_probs)
+lr_fpr, lr_tpr, _ = roc_curve(y_test, lr_probs)
+# plot the roc curve for the model
+plt.plot(ns_fpr, ns_tpr, linestyle='--', label='No Skill')
+plt.plot(lr_fpr, lr_tpr, marker='.', label='Random Forest')
+# axis labels
+plt.xlabel('False Positive Rate')
+plt.ylabel('True Positive Rate')
+# show the legend
+plt.legend()
+# show the plot
+plt.show()
+
+#%%
+
+#Forest using all rating scores
+
+y = airline['Satisfaction_satisfied']
+X = airline[['Class_Number','Inflight wifi service','Departure/Arrival time convenient', 'Ease of Online booking',
+'Gate location', 'Food and drink', 'Online boarding', 'Seat comfort',
+'Inflight entertainment', 'On-board service', 'Leg room service',
+'Baggage handling', 'Checkin service', 'Inflight service',
+'Cleanliness']]
+
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=0, shuffle=True)
+y_train = np.ravel(y_train)
+y_test = np.ravel(y_test)
+
+#%%
+forest1 = RandomForestClassifier(n_estimators = 1000, max_depth = 5, max_features='auto', n_jobs=1)
+forest1.fit(X_train, y_train)
+y_pred = forest1.predict(X_test)
+print("Accuracy:",accuracy_score(y_test, y_pred))
+print(classification_report(y_test, y_pred))
+#%%
+columns = airline[['Class_Number','Inflight wifi service','Departure/Arrival time convenient', 'Ease of Online booking',
+'Gate location', 'Food and drink', 'Online boarding', 'Seat comfort',
+'Inflight entertainment', 'On-board service', 'Leg room service',
+'Baggage handling', 'Checkin service', 'Inflight service',
+'Cleanliness']]
+
+airline_predictions4 = pd.DataFrame(columns=['forest_pred'], data=forest1.predict(columns)) 
+airline_predictions4['actual'] = airline['Satisfaction_satisfied']
+airline_predictions4
+
+#%%
+#ROC AUC Eval
+
+# generate a no skill prediction (majority class)
+ns_probs = [0 for _ in range(len(y_test))]
+# predict probabilities
+lr_probs = forest1.predict_proba(X_test)
+# keep probabilities for the positive outcome only
+lr_probs = lr_probs[:, 1]
+# calculate scores
+ns_auc = roc_auc_score(y_test, ns_probs)
+lr_auc = roc_auc_score(y_test, lr_probs)
+# summarize scores
+print('Random Forest: ROC AUC=%.3f' % (lr_auc))
+# calculate roc curves
+ns_fpr, ns_tpr, _ = roc_curve(y_test, ns_probs)
+lr_fpr, lr_tpr, _ = roc_curve(y_test, lr_probs)
+# plot the roc curve for the model
+plt.plot(ns_fpr, ns_tpr, linestyle='--', label='No Skill')
+plt.plot(lr_fpr, lr_tpr, marker='.', label='Random Forest')
+# axis labels
+plt.xlabel('False Positive Rate')
+plt.ylabel('True Positive Rate')
+# show the legend
+plt.legend()
+# show the plot
+plt.show()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#%%
+column_names = ['Class_Number','Inflight wifi service','Departure/Arrival time convenient', 'Ease of Online booking',
+'Gate location', 'Food and drink', 'Online boarding', 'Seat comfort',
+'Inflight entertainment', 'On-board service', 'Leg room service',
+'Baggage handling', 'Checkin service', 'Inflight service',
+'Cleanliness']
+feature_importance_score = pd.Series(forest1.feature_importances_,index=column_names).sort_values(ascending=False)
+feature_importance_score
+
+#%%
+#Forest using some important features
+
+y = airline['Satisfaction_satisfied']
+X = airline[['Online boarding', 'Class_Number', 'Inflight wifi service',
+'Inflight entertainment', 'Seat comfort', 'Leg room service']]
+
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=0, shuffle=True)
+y_train = np.ravel(y_train)
+y_test = np.ravel(y_test)
+
+forest2 = RandomForestClassifier(n_estimators = 1000, max_depth = 5, max_features='auto', n_jobs=1)
+forest2.fit(X_train, y_train)
+y_pred = forest2.predict(X_test)
+print("Accuracy:",accuracy_score(y_test, y_pred))
+
+
+#%%
+RandomForestClassifier(n_estimators=1000, max_depth=5, max_features='auto', n_jobs=1)
+# %%
