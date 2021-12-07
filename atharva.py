@@ -131,17 +131,26 @@ from statsmodels.formula.api import glm
 from statsmodels.formula.api import ols
 import statsmodels.api as sm
 import dataframe_image as dfi
+from sklearn.linear_model import LogisticRegression
 df1 = airline
 df1.columns = airline.columns.str.replace(" ","_")
 df1.columns = airline.columns.str.replace("-","_")
 df1.columns = airline.columns.str.replace("/","_")
 df1.var()
-satisLogit = glm(formula='satisfaction ~ Inflight_wifi_service + Departure_Arrival_time_convenient + Ease_of_Online_booking + Gate_location + Food_and_drink + Online_boarding + Seat_comfort + Inflight_entertainment + On_board_service + Leg_room_service + Baggage_handling + Checkin_service + Cleanliness', data=df1,family=sm.families.Binomial())
+satisLogit = glm(formula='satisfaction ~ Inflight_wifi_service + Departure_Arrival_time_convenient + Ease_of_Online_booking + Gate_location + Food_and_drink + Online_boarding + Seat_comfort + Inflight_entertainment + On_board_service + Leg_room_service + Baggage_handling + Inflight_service +Checkin_service + Cleanliness', data=df1,family=sm.families.Binomial())
 satisLogitfit = satisLogit.fit()
 print(satisLogitfit.summary())
 np.exp(satisLogitfit.params)
 np.exp(satisLogitfit.conf_int())
 df1["SatisfiedLogit"] = satisLogitfit.predict(df1)
 cut_off = 0.55
-df1['Statisfied_prediction'] = np.where(df1['SatisfiedLogit'] > cut_off, 1, 0)
+df1['Statisfied_prediction'] = np.where(df1['SatisfiedLogit'] > cut_off, 1, 0) 
+#%%
+# # features = {"Inflight wifi service":0.3131,"Departure/Arrival time convenient":-0.2971 ,"Ease of Online booking":-0.1423,"Gate location" :0.1184 ,"Food and drink": -0.0705,"Online boarding": 0.8202,"Seat comfort":0.1503,"Inflight entertainment":0.2924,"On-board service":0.2810,"Leg room service":0.3525 ,"Baggage handling": 0.0592,"Checkin service":0.2232,"Cleanliness":0.0488}
+# plot = pd.DataFrame({"Inflight wifi service":[0.3131],"Departure/Arrival time convenient":[-0.2971] ,"Ease of Online booking":[-0.1423],"Gate location" :[0.1184 ],"Food and drink": [-0.0705],"Online boarding": [0.8202],"Seat comfort":[0.1503],"Inflight entertainment":[0.2924],"On-board service":[0.2810],"Leg room service":[0.3525] ,"Baggage handling": [0.0592],"Checkin service":[0.2232],"Cleanliness":[0.0488]})
+# #%%
+# plot.pivot(columns=["Inflight wifi service","Departure/Arrival time convenient","Ease of Online booking","Gate location","Food and drink","Online boarding","Seat comfort","Inflight entertainment","On-board service","Leg room service","Baggage handling","Checkin service","Cleanliness"])
+
+# %%
+
 # %%
