@@ -48,17 +48,22 @@ from statsmodels.graphics.gofplots import qqplot
 #Check the basic info of the dataset, see the data columns, their types, and the shape
 airline = pd.read_csv('airline.csv', index_col=0)
 
+#%%
 # pivot table of customer types by types of travels valued by average flight distance
 airline.pivot_table(index='Customer Type', columns='Type of Travel' , values='Flight Distance', aggfunc = np.mean)
 
+#%%
 # pivot table of customer types by types of travels valued by average total delay minutes
 airline.pivot_table(index='Customer Type', columns='Type of Travel' , values='Total Delay in Minutes', aggfunc = np.mean)
 
+#%%
 # pivot table of customer types by satisfaction valued by average flight distance
 airline.pivot_table(index='Customer Type', columns='Satisfaction' , values='Flight Distance', aggfunc = np.mean)
 
+#%%
 # pivot table of customer types by satisfaction valued by average total delay minutes
 airline.pivot_table(index='Customer Type', columns='Satisfaction' , values='Total Delay in Minutes', aggfunc = np.mean)
+
 
 #%%
 # Piechart of Satisfaction
@@ -86,15 +91,6 @@ sns.set_style(style="whitegrid")
 sns.countplot(x="Age_Range", data=airline, order=airline['Age_Range'].value_counts().index)
 plt.title('Customers in Different Ranges of Ages')
 plt.show()
-
-#%%
-# Violinplot of flight distance by class splitted by satisfaction
-
-fig, axs = plt.subplots() 
-sns.set_style(style="whitegrid")
-sns.violinplot(x="Class", y="Flight Distance", hue="Satisfaction",
-                    data=airline, palette = 'Set1', split=True)
-plt.title('Violinplot of Flight Distances in Each Class splited by Satisfaction')
 
 #%%
 # a plot of customer count by class and type of travel (could be a stackplot)
