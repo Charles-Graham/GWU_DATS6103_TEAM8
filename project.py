@@ -36,7 +36,7 @@ from sklearn.cluster import KMeans
 from sklearn.svm import SVC, LinearSVC
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.metrics import accuracy_score, classification_report, roc_auc_score, roc_curve, confusion_matrix, classification_report
+from sklearn.metrics import accuracy_score, classification_report, roc_auc_score, roc_curve, confusion_matrix, classification_report, r2_score
 
 #%%[markdown]
 ## **Preprocessing**
@@ -442,7 +442,7 @@ plt.legend()
 plt.show()
 
 #%%[markdown]
-# ### **Q3:** How does the  departure/arrival delay time affect the satisfaction?
+# ### **Q3:** How does the departure/arrival delay time affect the satisfaction?
 
 #%%
 # change columns name for model
@@ -458,6 +458,7 @@ airlineQ3['Class'] = airlineQ3['Class'].map(lambda x : 0 if x == 'Business' else
 # heatmap
 plt.figure(figsize=(20,15))
 sns.heatmap(airlineQ3.corr(),annot=True,cmap='YlGnBu')
+plt.title("correaltion plot of all variables")
 plt.tight_layout
 # reindex
 #airlineQ3.reset_index(drop=True, inplace=True)
@@ -484,14 +485,14 @@ sns.scatterplot(x="Departure Delay in Minutes", y="Arrival Delay in Minutes", hu
 plt.title("Scatterplot of Departure Delay in Minutes and Arrival Delay in Minutes")
 plt.xlabel("Departure Delay in Minutes")
 plt.ylabel("Arrival Delay in Minutes")
-
-
 #%%
-sns.countplot(data=airline, x="Departure/Arrival time convenient", hue="Satisfaction")
+ax = sns.countplot(data=airline, x="Departure/Arrival time convenient", hue="Satisfaction")
+for p in ax.patches:
+        ax.annotate('{}'.format(p.get_height()), (p.get_x(), p.get_height()+60))
 plt.title("Countplot of Departure/Arrival time convenient")
 
 # %%
-# Make a cross table
+# This function is to show the result of confusion matrix
 def showCrossTable(df, modelLogitFit, cut_off):
   modelPrediciton = pd.DataFrame(data= modelLogitFit.predict(df)) 
   # print(dfChkBasics(modelPrediciton))
@@ -509,46 +510,46 @@ def showCrossTable(df, modelLogitFit, cut_off):
   print(f'Accuracy = (TP + TN) / Total = {(TP + TN) / Total}')
   print(f'Precision = TP / (TP + FP) = {TP / (TP + FP)}')
   print(f'Recall rate = TP / (TP + FN) = {TP / (TP + FN)}')
+  print(f'Specificity = TN / (TN + FP) = {TN / (TN + FP)}')
   print(f'F1 score = TP / (TP + (FP + FN)/2) = {TP / (TP + (FP + FN)/2)}')
-
-
 #%%
 #####################################################################
 # Logistic Regression model of Satisfaction ~ ddim + adim
 #####################################################################
 modelDelayLogitFitOrigin = glm(formula='Satisfaction ~ ddim + adim', data=airlineQ3, family=sm.families.Binomial()).fit()
 print( modelDelayLogitFitOrigin.summary())
+#%% [markdown]
 # Since the p-value is extremely small, Departure Delay in Minutes and Arrival Delay in Minutes have strong relationship with Satisfaction
 showCrossTable(airlineQ3,modelDelayLogitFitOrigin,0.4)
-
-
-#%%
-#####################################################################
-# Logistic Regression model of Satisfaction ~ tdim + C(tot) + datc + C(Class)
-#####################################################################
-modelDelayLogitFit = glm(formula='Satisfaction ~ tdim + C(tot) + datc + C(Class)', data=airlineQ3, family=sm.families.Binomial()).fit()
-print( modelDelayLogitFit.summary())
-# Since the p-value is extremely small, Departure Delay in Minutes and Arrival Delay in Minutes have strong relationship with Satisfaction
-
-
-#%%
-showCrossTable(airlineQ3,modelDelayLogitFit,0.5)
-# showCrossTable(airlineQ3,modelDelayLogitFit,0.73)
-#%%
+#%% [markdown]
+# We can see this model is not good enough, the accuracy only have 0.46.\
+# And from the correaltion plot, we can see that Departure Delay in Minutes and Arrival Delay in Minutes have high correlation, so I change them to Total Delay in Minutes (tdim)\
 #%% 
 #####################################################################
 # Logistic Regression model of Satisfaction ~ tdim
 #####################################################################
 modelDelayTdimLogitFit = glm(formula='Satisfaction ~ tdim', data=airlineQ3, family=sm.families.Binomial()).fit()
 print( modelDelayTdimLogitFit.summary())
-#%%
 showCrossTable(airlineQ3,modelDelayTdimLogitFit,0.4)
-
+#%% [markdown]
+# Let us add some time related variables to improve the model.
 #%%
-# xSatisfaction = airlineQ3[['tot', 'datc', 'Class']]
+#####################################################################
+# Logistic Regression model of Satisfaction ~ tdim + C(tot) + datc + C(Class)
+#####################################################################
+modelDelayLogitFit = glm(formula='Satisfaction ~ tdim + C(tot) + datc + C(Class)', data=airlineQ3, family=sm.families.Binomial()).fit()
+print( modelDelayLogitFit.summary())
+showCrossTable(airlineQ3,modelDelayLogitFit,0.5)
+# showCrossTable(airlineQ3,modelDelayLogitFit,0.73)
+#%% [marldown]
+# In this model I add some time related variables such as Type of travel(tot), Departure/Arrival time convenient(datc), and Class.\
+# We can see this model is much better. 
+#%%
+# sklearn method
 xSatisfaction = airlineQ3[['tot', 'datc','tdim', 'Class']]
 ySatisfaction = airlineQ3['Satisfaction']
-# %%
+#%%
+# just see how the data looks like
 sns.set()
 sns.pairplot(xSatisfaction)
 plt.show()
@@ -560,10 +561,10 @@ plt.show()
 #%%
 # Plot the histogram thanks to the distplot function
 sns.scatterplot(data=airlineQ3, x="adim", y="ddim", hue="tot")
-
+plt.title("relation between departure delay in minutes (ddim) and arrival delay in minutes (adim)")
 #%%
+# split data set into train and test
 X_train, X_test, y_train, y_test = train_test_split(xSatisfaction, ySatisfaction, random_state=1 )
-
 satisfactionLogit = LogisticRegression()  # instantiate
 satisfactionLogit.fit(X_train, y_train)
 print('Logit model accuracy (with the test set):', satisfactionLogit.score(X_test, y_test))
@@ -571,35 +572,15 @@ print('Logit model accuracy (with the train set):', satisfactionLogit.score(X_tr
 lr_cv_acc = cross_val_score(satisfactionLogit, xSatisfaction, ySatisfaction, cv=10, n_jobs = -1)
 print(f'\nLogisticRegression CV accuracy score: {lr_cv_acc}\n')
 #Confusion matrix in scikit-learn
-
 y_pred = satisfactionLogit.predict(X_test)
 print(confusion_matrix(y_test, y_pred))
 print(classification_report(y_test, y_pred))
-
-#%% doesn't work
-# from mlxtend.plotting import plot_decision_regions
-# import matplotlib.pyplot as plt
-# value = 2.5
-# width = 0.75
-# # Plotting decision regions
-# plot_decision_regions(xSatisfaction.to_numpy(), ySatisfaction.to_numpy(), clf=satisfactionLogit, legend=2, 
-#                       filler_feature_values={2: value, 3: value, 4: value},
-#                       filler_feature_ranges={2: width, 3: width, 4: width},)
-
-# # Adding axes annotations
-# plt.xlabel('')
-# plt.ylabel('')
-# plt.title('Logistic on airline')
-# plt.show()
-
-
+print(f"r2_score: {r2_score(y_test, y_pred)}")
 #%%
 #####################################################################
 # Receiver Operator Characteristics (ROC)
 # Area Under the Curve (AUC)
 #####################################################################
-
-
 # generate a no skill prediction (majority class)
 ns_probs = [0 for _ in range(len(y_test))]
 # predict probabilities
@@ -626,7 +607,8 @@ plt.title("AUC/ROC of Satisfaction ~ tdim + C(tot) + datc + C(Class)")
 plt.legend()
 # show the plot
 plt.show()
-
+#%% [markdown]
+# From AUC/ROC = 0.812 we can see this model is not a bad model.
 # %%
 #####################################################################
 # K-Nearest-Neighbor KNN 
@@ -634,7 +616,6 @@ plt.show()
 # number of neighbors
 mrroger = 7
 # KNN algorithm
-
 knn = KNeighborsClassifier(n_neighbors=mrroger) # instantiate with n value given
 knn.fit(xSatisfaction,ySatisfaction)
 # y_pred = knn.predict(xSatisfaction)
@@ -681,11 +662,7 @@ knnDf = pd.DataFrame(columns=colName)
 for i in range(3,20):
   if i%2 == 1:
     knnDf = knnBest(i,knnDf)
-  
-
-print(knnDf) 
-#%%
-# knnDf.set_index('index', inplace=True)
+print(knnDf)
 #%%
 plt.plot("knn_num","knn_cv_mean_score", data=knnDf, marker='o', label='knn_cv_mean_score')
 plt.plot("knn_num",'knn_cv_train_score', data=knnDf, marker='o', label='knn_train_score')
@@ -695,9 +672,6 @@ plt.xlabel("KNN-K value")
 plt.ylabel("accuracy")
 plt.legend()
 plt.show() 
-  
-  
-
 ##################################################
 #%%
 # 4-KNN algorithm
@@ -726,9 +700,8 @@ km_xSatisfaction = KMeans( n_clusters=2, init='random', n_init=10, max_iter=300,
 y_km = km_xSatisfaction.fit_predict(xSatisfaction)
 # plot
 # plot the 3 clusters
-index1 = 2
-index2 = 3
-
+index1 = 1
+index2 = 2
 plt.scatter( xSatisfaction[y_km==0].iloc[:,index1], xSatisfaction[y_km==0].iloc[:,index2], s=50, c='lightgreen', marker='s', edgecolor='black', label='cluster 1' )
 plt.scatter( xSatisfaction[y_km==1].iloc[:,index1], xSatisfaction[y_km==1].iloc[:,index2], s=50, c='orange', marker='o', edgecolor='black', label='cluster 2' )
 #plt.scatter( xSatisfaction[y_km==2].iloc[:,index1], xSatisfaction[y_km==2].iloc[:,index2], s=50, c='lightblue', marker='v', edgecolor='black', label='cluster 3' )
@@ -739,7 +712,6 @@ plt.xlabel(str(index1) + " : " + xSatisfaction.columns[index1])
 plt.ylabel(str(index2) + " : " + xSatisfaction.columns[index2])
 plt.grid()
 plt.show()
-
 #%%
 # * SVC(): you can try adjusting the gamma level between 'auto', 'scale', 0.1, 5, etc, and see if it makes any difference 
 # * SVC(kernel="linear"): having a linear kernel should be the same as the next one, but the different implementation usually gives different results 
