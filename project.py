@@ -458,7 +458,7 @@ airlineQ3['Class'] = airlineQ3['Class'].map(lambda x : 0 if x == 'Business' else
 # heatmap
 plt.figure(figsize=(20,15))
 sns.heatmap(airlineQ3.corr(),annot=True,cmap='YlGnBu')
-plt.title("correaltion plot of all variables")
+plt.title("correlation plot of all variables")
 plt.tight_layout
 # reindex
 #airlineQ3.reset_index(drop=True, inplace=True)
